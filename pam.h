@@ -14,6 +14,29 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusObjectPath>
+#include <QDBusInterface>
+#include <QDBusArgument>
+
+struct QStringDBusObjectPathMap {
+    QString sessionText;
+    QDBusObjectPath objectPath;
+};
+Q_DECLARE_METATYPE(QStringDBusObjectPathMap)
+
+inline QDBusArgument &operator<<(QDBusArgument &arg, const QStringDBusObjectPathMap &map) {
+    arg.beginStructure();
+    arg << map.sessionText << map.objectPath;
+    arg.endStructure();
+    return arg;
+}
+
+inline const QDBusArgument &operator>>(const QDBusArgument &arg, QStringDBusObjectPathMap &map) {
+    qDebug() << arg.currentType();
+    arg.beginStructure();
+    arg >> map.sessionText >> map.objectPath;
+    arg.endStructure();
+    return arg;
+}
 
 bool login(QString username, QString password, QString exec, pid_t *child_pid, QDBusObjectPath* resumeSession = NULL);
 bool logout();

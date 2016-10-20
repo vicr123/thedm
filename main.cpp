@@ -30,6 +30,8 @@ void openWindows() {
 int main(int argc, char *argv[])
 {
     qputenv("XDG_SESSION_CLASS", "greeter");
+
+
     if (qgetenv("DISPLAY") == "") {
         //Start the X server
         int display;
@@ -37,13 +39,14 @@ int main(int argc, char *argv[])
             //Do nothing and go over the loop again.
             //In effect, we open a X server on the next available display number.
         }
+
         QProcess vtGet;
         vtGet.start("fgconsole");
         vtGet.waitForFinished();
-        QString vt = "vt" + QString(vtGet.readAll());
+        QString currentVt = "vt" + QString(vtGet.readAll());
 
         QProcess* XServerProcess = new QProcess();
-        XServerProcess->start("/usr/bin/X :" + QString::number(display) + " " + vt);
+        XServerProcess->start("/usr/bin/X :" + QString::number(display) + " " + currentVt);
         XServerProcess->waitForStarted();
         sleep(1);
         qputenv("DISPLAY", QString(":" + QString::number(display)).toUtf8());

@@ -29,29 +29,6 @@
 #include <sys/wait.h>
 #include <X11/Xlib.h>
 
-//typedef QMap<QString, QDBusObjectPath> QStringDBusObjectPathMap;
-struct QStringDBusObjectPathMap {
-    QString sessionText;
-    QDBusObjectPath objectPath;
-
-};
-Q_DECLARE_METATYPE(QStringDBusObjectPathMap)
-
-inline QDBusArgument &operator<<(QDBusArgument &arg, const QStringDBusObjectPathMap &map) {
-    arg.beginStructure();
-    arg << map.sessionText << map.objectPath;
-    arg.endStructure();
-    return arg;
-}
-
-inline const QDBusArgument &operator>>(const QDBusArgument &arg, QStringDBusObjectPathMap &map) {
-    qDebug() << arg.currentType();
-    arg.beginStructure();
-    arg >> map.sessionText >> map.objectPath;
-    arg.endStructure();
-    return arg;
-}
-
 namespace Ui {
 class MainWindow;
 }
