@@ -5,11 +5,11 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     const char *data[2];
     data[0] = username.toStdString().data();
     data[1] = password.toStdString().data();
-    struct pam_conv pamConversion = {
+    struct pam_conv pamConversationParams = {
         conversation, data
     };
 
-    int result = pam_start("thedm", username.toStdString().data(), &pamConversion, &pamHandle);
+    int result = pam_start("thedm", username.toStdString().data(), &pamConversationParams, &pamHandle);
     if (result != PAM_SUCCESS) {
         //ERROR ERROR
         qCritical() << "pam_start failed";
@@ -19,7 +19,7 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     result = pam_authenticate(pamHandle, 0);
     if (result != PAM_SUCCESS) {
         //ERROR ERROR
-        qCritical() << "pam_authenticate failed";
+        qCritical() << "pam_authenticate failed with error " + QString::number(result);
         return false;
     }
 
@@ -84,12 +84,13 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     *child_pid = fork();
     //qDebug() << "PID of new session: " + QString::number(*child_pid);
     if (*child_pid == 0) {
-        //We're in the child process now. Start the desktop environment.
+        //Change the UID and GID of this new process
         setsid();
         setuid(pw->pw_uid);
         setgid(pw->pw_gid);
         chdir(pw->pw_dir);
 
+        //Start DBus
         QProcess* dbusLaunch = new QProcess;
         dbusLaunch->start("dbus-launch");
         dbusLaunch->waitForFinished();
@@ -102,6 +103,7 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
             }
         }
 
+        //Start the new process
         execl(pw->pw_shell, pw->pw_shell, "-c", execFile.toStdString().data(), NULL);
         qDebug() << "execl failed.";
         exit(1);
