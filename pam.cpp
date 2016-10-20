@@ -89,22 +89,6 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
     qputenv("XDG_SESSION_ID", sessionInterface.property("Id").toString().toUtf8());
     qputenv("XDG_VNTR", sessionInterface.property("VNTr").toString().toUtf8());
-    //qputenv("XDG_SEAT_PATH", sessionInterface.property("Seat"))
-
-    {
-        QDBusMessage GetSeatMessage = QDBusMessage::createMethodCall("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.DBus.Properties", "Get");
-        QVariantList GetSeatArgs;
-        GetSeatArgs.append("org.freedesktop.login1.Session");
-        GetSeatArgs.append("Seat");
-        GetSeatMessage.setArguments(GetSeatArgs);
-        QDBusMessage GetSeatReply = QDBusConnection::systemBus().call(GetSeatMessage);
-        QDBusVariant GetSeatReplyVariant = GetSeatReply.arguments().first().value<QDBusVariant>();
-        QDBusArgument sessionListArgument = GetSeatReplyVariant.variant().value<QDBusArgument>();
-        QStringDBusObjectPathMap sessionList;
-        sessionListArgument >> sessionList;
-
-        qputenv("XDG_SEAT_PATH", sessionList.objectPath.path().toUtf8());
-    }
 
     //Blank out the current password
     currentPassword = "";

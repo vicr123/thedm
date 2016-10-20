@@ -15,6 +15,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //QRect screenGeometry = QApplication::desktop()->screenGeometry();
     ui->Cover->setParent(this);
     ui->Cover->setGeometry(0, 0, this->width(), this->height());
+    ui->confirmPowerFrame->setVisible(false);
+    ui->confirmPowerFrame->setParent(this);
 
     //Load sessions
     QMenu* sessionsMenu = new QMenu();
@@ -318,4 +320,52 @@ void MainWindow::on_usernameBox_currentIndexChanged(int index)
         ui->loginButton->setText("Log In");
         sessionPath = NULL;
     }
+}
+
+void MainWindow::on_powerButton_clicked()
+{
+    ui->confirmPowerFrame->setGeometry(0, this->height(), this->width(), ui->confirmPowerFrame->sizeHint().height());
+    ui->confirmPowerFrame->setVisible(true);
+    //ui->powerOptionsFrame->setVisible(false);
+    QPropertyAnimation* anim = new QPropertyAnimation(ui->confirmPowerFrame, "geometry");
+    anim->setStartValue(ui->confirmPowerFrame->geometry());
+    anim->setEndValue(QRect(0, this->height() - ui->confirmPowerFrame->height(), this->width(), ui->confirmPowerFrame->sizeHint().height()));
+    anim->setDuration(500);
+    anim->setEasingCurve(QEasingCurve::OutCubic);
+    connect(anim, SIGNAL(finished()), anim, SLOT(deleteLater()));
+    anim->start();
+}
+
+void MainWindow::on_cancelPowerOptions_clicked()
+{
+    ui->powerOptionsFrame->setVisible(true);
+
+    QPropertyAnimation* anim = new QPropertyAnimation(ui->confirmPowerFrame, "geometry");
+    anim->setStartValue(ui->confirmPowerFrame->geometry());
+    anim->setEndValue(QRect(0, this->height(), this->width(), ui->confirmPowerFrame->sizeHint().height()));
+    anim->setDuration(500);
+    anim->setEasingCurve(QEasingCurve::InCubic);
+    connect(anim, SIGNAL(finished()), anim, SLOT(deleteLater()));
+    anim->start();
+
+}
+
+void MainWindow::on_powerOffButton_clicked()
+{
+    //Power off the PC
+    QDBusMessage message = QDBusMessage::createMethodCall("org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "PowerOff");
+    QList<QVariant> arguments;
+    arguments.append(true);
+    message.setArguments(arguments);
+    QDBusConnection::systemBus().send(message);
+}
+
+void MainWindow::on_rebootButton_clicked()
+{
+    //Reboot the PC
+    QDBusMessage message = QDBusMessage::createMethodCall("org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "Reboot");
+    QList<QVariant> arguments;
+    arguments.append(true);
+    message.setArguments(arguments);
+    QDBusConnection::systemBus().send(message);
 }

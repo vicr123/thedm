@@ -28,7 +28,7 @@
      <number>0</number>
     </property>
     <item row="4" column="0" colspan="3">
-     <widget class="QFrame" name="frame_3">
+     <widget class="QFrame" name="powerOptionsFrame">
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
@@ -69,6 +69,19 @@
          <property name="icon">
           <iconset theme="application-exit">
            <normaloff>.</normaloff>.</iconset>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="powerButton">
+         <property name="text">
+          <string>Power</string>
+         </property>
+         <property name="icon">
+          <iconset theme="system-shutdown"/>
          </property>
          <property name="flat">
           <bool>true</bool>
@@ -353,7 +366,7 @@
       </property>
      </spacer>
     </item>
-    <item row="5" column="0" colspan="2">
+    <item row="6" column="0" colspan="2">
      <widget class="QFrame" name="paddingFrame">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -369,7 +382,7 @@
       </property>
      </widget>
     </item>
-    <item row="6" column="0" colspan="3">
+    <item row="7" column="0" colspan="3">
      <widget class="CoverFrame" name="Cover">
       <property name="autoFillBackground">
        <bool>true</bool>
@@ -528,6 +541,85 @@
           </size>
          </property>
         </spacer>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="5" column="0" colspan="3">
+     <widget class="QFrame" name="confirmPowerFrame">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="leftMargin">
+        <number>9</number>
+       </property>
+       <property name="topMargin">
+        <number>3</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>3</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>You're about to power off your PC. Are you sure?</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="rebootButton">
+         <property name="text">
+          <string>Reboot</string>
+         </property>
+         <property name="icon">
+          <iconset theme="system-reboot"/>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="powerOffButton">
+         <property name="text">
+          <string>Power Off</string>
+         </property>
+         <property name="icon">
+          <iconset theme="system-shutdown-"/>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="cancelPowerOptions">
+         <property name="text">
+          <string>Cancel</string>
+         </property>
+         <property name="icon">
+          <iconset theme="dialog-cancel"/>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

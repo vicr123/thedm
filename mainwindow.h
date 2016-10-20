@@ -73,6 +73,14 @@ private slots:
 
     void on_usernameBox_currentIndexChanged(int index);
 
+    void on_powerButton_clicked();
+
+    void on_cancelPowerOptions_clicked();
+
+    void on_powerOffButton_clicked();
+
+    void on_rebootButton_clicked();
+
 private:
     Ui::MainWindow *ui;
 
