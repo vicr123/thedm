@@ -9,7 +9,7 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
         conversation, data
     };
 
-    int result = pam_start("display_manager", username.toStdString().data(), &pamConversion, &pamHandle);
+    int result = pam_start("thedm", username.toStdString().data(), &pamConversion, &pamHandle);
     if (result != PAM_SUCCESS) {
         //ERROR ERROR
         qCritical() << "pam_start failed";
