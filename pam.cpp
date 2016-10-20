@@ -1,6 +1,7 @@
 #include "pam.h"
 
 static pam_handle_t *pamHandle;
+QString currentPassword, currentUsername;
 bool login(QString username, QString password, QString execFile, pid_t *child_pid, QDBusObjectPath* resumeSession) {
     const char *data[2];
     data[0] = username.toStdString().data();
@@ -8,6 +9,9 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     struct pam_conv pamConversationParams = {
         conversation, data
     };
+
+    currentUsername = username;
+    currentPassword = password;
 
     int result = pam_start("thedm", username.toStdString().data(), &pamConversationParams, &pamHandle);
     if (result != PAM_SUCCESS) {
@@ -79,6 +83,8 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     qputenv("MAIL", _PATH_MAILDIR);
     qputenv("XAUTHORITY", QByteArray(pw->pw_dir) + "/.Xauthority");
 
+    //Blank out the current password
+    currentPassword = "";
 
     //Fork the process and start the desktop environment
     *child_pid = fork();
@@ -159,14 +165,12 @@ int conversation(int num_msg, const pam_message **msg, pam_response **resp, void
         case PAM_PROMPT_ECHO_ON:
             //PAM is looking for the username
             qDebug() << "Passing username to PAM...";
-            username = ((char **) appdata_ptr)[0];
-            (*resp)[i].resp = strdup(username);
+            (*resp)[i].resp = strdup(currentUsername.toStdString().data());
             break;
         case PAM_PROMPT_ECHO_OFF:
             //PAM is looking for the password
             qDebug() << "Passing password to PAM...";
-            password = ((char **) appdata_ptr)[1];
-            (*resp)[i].resp = strdup(password);
+            (*resp)[i].resp = strdup(currentPassword.toStdString().data());
             break;
         case PAM_ERROR_MSG:
             qWarning() << msg[i]->msg;
