@@ -158,11 +158,13 @@ int conversation(int num_msg, const pam_message **msg, pam_response **resp, void
         switch(msg[i]->msg_style) {
         case PAM_PROMPT_ECHO_ON:
             //PAM is looking for the username
+            qDebug() << "Passing username to PAM...";
             username = ((char **) appdata_ptr)[0];
             (*resp)[i].resp = strdup(username);
             break;
         case PAM_PROMPT_ECHO_OFF:
             //PAM is looking for the password
+            qDebug() << "Passing password to PAM...";
             password = ((char **) appdata_ptr)[1];
             (*resp)[i].resp = strdup(password);
             break;
