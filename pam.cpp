@@ -88,7 +88,7 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     //Get Current Session
     QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
     qputenv("XDG_SESSION_ID", sessionInterface.property("Id").toString().toUtf8());
-    qputenv("XDG_VNTR", sessionInterface.property("VNTr").toString().toUtf8());
+    qputenv("XDG_VTNR", sessionInterface.property("VTNr").toString().toUtf8());
 
     //Blank out the current password
     currentPassword = "";
