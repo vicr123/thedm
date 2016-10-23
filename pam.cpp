@@ -52,6 +52,8 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
         return false;
     }
 
+    //Set group information
+    initgroups(username.toStdString().data(), pw->pw_gid);
 
     //Get an authentication token
     result = pam_setcred(pamHandle, PAM_ESTABLISH_CRED);
@@ -108,11 +110,7 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     if (*child_pid == 0) {
         //Change the UID and GID of this new process
         setsid();
-        if (initgroups(username.toStdString().data(), pw->pw_gid) == -1) {
-            qDebug() << "Setting groups failed. Falling back to setting GID.";
-            setgid(pw->pw_gid);
-        }
-
+        setgid(pw->pw_gid);
         setuid(pw->pw_uid);
         chdir(pw->pw_dir);
 
