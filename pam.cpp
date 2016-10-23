@@ -5,6 +5,20 @@ extern QString currentVt;
 static pam_handle_t *pamHandle;
 QString currentPassword, currentUsername;
 bool login(QString username, QString password, QString execFile, pid_t *child_pid, QDBusObjectPath* resumeSession) {
+    //Set XDG environment variables
+    //Get current user information
+    struct passwd *pw = getpwnam(username.toStdString().data());
+
+    //Get Current Session
+    QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
+    qputenv("XDG_SESSION_ID", sessionInterface.property("Id").toString().toUtf8());
+    qputenv("XDG_VTNR", sessionInterface.property("VTNr").toString().toUtf8());
+    qputenv("XDG_RUNTIME_DIR", QString("/run/user/" + QString::number(pw->pw_uid)).toUtf8());
+
+    //TODO: Correct these environment variables
+    qputenv("XDG_SESSION_PATH", "/org/freedesktop/DisplayManager/Session0");
+    qputenv("XDG_SEAT_PATH", "/org/freedesktop/DisplayManager/Seat0");
+
     const char *data[2];
     data[0] = username.toStdString().data();
     data[1] = password.toStdString().data();
@@ -75,8 +89,7 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
         return false;
     }
 
-    //Set up environment
-    struct passwd *pw = getpwnam(username.toStdString().data());
+    //Set up other environment variables
     qputenv("HOME", pw->pw_dir);
     qputenv("PWD", pw->pw_dir);
     qputenv("SHELL", pw->pw_shell);
@@ -84,16 +97,6 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     qputenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/bin");
     qputenv("MAIL", _PATH_MAILDIR);
     qputenv("XAUTHORITY", QByteArray(pw->pw_dir) + "/.Xauthority");
-
-    //Get Current Session
-    QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
-    qputenv("XDG_SESSION_ID", sessionInterface.property("Id").toString().toUtf8());
-    qputenv("XDG_VTNR", sessionInterface.property("VTNr").toString().toUtf8());
-    qputenv("XDG_RUNTIME_DIR", QString("/run/user/" + QString::number(pw->pw_uid)).toUtf8());
-
-    //TODO: Correct these environment variables
-    qputenv("XDG_SESSION_PATH", "/org/freedesktop/DisplayManager/Session0");
-    qputenv("XDG_SEAT_PATH", "/org/freedesktop/DisplayManager/Seat0");
 
     //Blank out the current password
     currentPassword = "";
