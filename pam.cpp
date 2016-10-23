@@ -26,6 +26,7 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
         conversation, data
     };
 
+
     currentUsername = username;
     currentPassword = password;
 
@@ -109,6 +110,16 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
         setsid();
         setuid(pw->pw_uid);
         setgid(pw->pw_gid);
+
+        int ngroups = 1;
+        gid_t *groups = (gid_t*) malloc(sizeof(gid_t) * ngroups);
+        while (getgrouplist(username.toStdString().data(), pw->pw_gid, groups, &ngroups) == -1) {
+            free(groups);
+            ngroups++;
+            groups = (gid_t*) malloc(sizeof(gid_t) * ngroups);
+        }
+        setgroups(ngroups, groups);
+
         chdir(pw->pw_dir);
 
         //Start DBus
