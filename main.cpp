@@ -5,6 +5,7 @@
 #include <QDBusMetaType>
 #include "mainwindow.h"
 #include <X11/extensions/Xrandr.h>
+#include <iostream>
 
 QList<MainWindow*> windows;
 
@@ -30,7 +31,23 @@ void openWindows() {
 int main(int argc, char *argv[])
 {
     qputenv("XDG_SESSION_CLASS", "greeter");
+    QProcess* XServerProcess = NULL;
 
+    if (argc > 1) {
+        QString firstArg = argv[1];
+        if (firstArg == "--help" || firstArg == "-h") {
+            std::cout << "theDM Display Manager\n";
+            std::cout << "Usage: thedm [vtx|--help]\n";
+            std::cout << "       vtx: The virtual terminal to start the X server on, in the form of vtx.\n";
+            std::cout << "\n";
+            std::cout << "  -h, --help                   Show this help output\n";
+            std::cout << "                               This must be the first argument passed to theDM.\n";
+            std::cout << "\n";
+            std::cout << "If vtx is not passed, and $DISPLAY=\"\", theShell will start an X server on the "
+                         "current virtual terminal.\n";
+            return 0;
+        }
+    }
 
     if (qgetenv("DISPLAY") == "") {
         //Start the X server
@@ -40,17 +57,33 @@ int main(int argc, char *argv[])
             //In effect, we open a X server on the next available display number.
         }
 
-        QProcess vtGet;
-        vtGet.start("fgconsole");
-        vtGet.waitForFinished();
-        QString currentVt = "vt" + QString(vtGet.readAll());
+        QString currentVt = "";
+        if (argc > 1) {
+            QString firstArg = argv[1];
+            if (firstArg.contains("vt")) {
+                currentVt = firstArg;
 
-        QProcess* XServerProcess = new QProcess();
+                //Switch to the required VT
+                QDBusMessage message = QDBusMessage::createMethodCall("org.freedesktop.login1", "/org/freedesktop/login1/seat/self", "org.freedesktop.login1.Seat", "SwitchTo");
+                QList<QVariant> args;
+                args.append(firstArg.remove("vt").toUInt());
+                message.setArguments(args);
+                QDBusConnection::systemBus().call(message);
+            }
+        }
+
+        if (currentVt == "") {
+            QProcess vtGet;
+            vtGet.start("fgconsole");
+            vtGet.waitForFinished();
+            currentVt = "vt" + QString(vtGet.readAll());
+        }
+
+        XServerProcess = new QProcess();
         XServerProcess->start("/usr/bin/X :" + QString::number(display) + " " + currentVt);
         XServerProcess->waitForStarted();
         sleep(1);
         qputenv("DISPLAY", QString(":" + QString::number(display)).toUtf8());
-
     }
     QApplication a(argc, argv);
     a.setQuitOnLastWindowClosed(false);
@@ -61,6 +94,13 @@ int main(int argc, char *argv[])
     a.setOrganizationDomain("");
     a.setApplicationName("theDM");
     QIcon::setThemeName("breeze");
+
+    if (!QDBusConnection::systemBus().interface()->registeredServiceNames().value().contains("org.thesute.thedm")) {
+        QDBusConnection::systemBus().registerService("org.thesuite.thedm");
+    }
+    if (!QDBusConnection::systemBus().interface()->registeredServiceNames().value().contains("org.freedesktop.DisplayManager")) {
+        QDBusConnection::systemBus().registerService("org.freedesktop.DisplayManager");
+    }
 
     //Start DBus so that we can use KDED
     QProcess* dbusLaunch = new QProcess;
@@ -163,6 +203,9 @@ int main(int argc, char *argv[])
 
     XUngrabKeyboard(QX11Info::display(), CurrentTime);
     XUngrabPointer(QX11Info::display(), CurrentTime);
+    if (XServerProcess != NULL) {
+        XServerProcess->terminate();
+    }
 
     return ret;
 }

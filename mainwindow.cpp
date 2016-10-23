@@ -133,6 +133,11 @@ void MainWindow::resizeSlot() {
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {
     hideCover();
+
+    if (event->key() == Qt::Key_PowerOff) {
+        //Confirm power off
+        on_powerButton_clicked();
+    }
 }
 
 void MainWindow::on_passwordBox_returnPressed()
@@ -179,21 +184,6 @@ void MainWindow::hideCover() {
         animation->setDuration(500);
         animation->setEasingCurve(QEasingCurve::OutCubic);
         animation->start();
-        connect(animation, &QPropertyAnimation::finished, [=]() {
-            QString name = qgetenv("USER");
-            if (name.isEmpty()) {
-                name = qgetenv("USERNAME");
-            }
-
-            QProcess* tscheckpass = new QProcess();
-            tscheckpass->start("tscheckpass " + name);
-            tscheckpass->waitForFinished();
-            if (tscheckpass->exitCode() == 0) {
-                QApplication::exit(0);
-            }
-
-            animation->deleteLater();
-        });
         typePassword = true;
         ui->passwordBox->setFocus();
     }
