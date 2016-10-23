@@ -108,18 +108,12 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     if (*child_pid == 0) {
         //Change the UID and GID of this new process
         setsid();
-        setuid(pw->pw_uid);
-        setgid(pw->pw_gid);
-
-        int ngroups = 1;
-        gid_t *groups = (gid_t*) malloc(sizeof(gid_t) * ngroups);
-        while (getgrouplist(username.toStdString().data(), pw->pw_gid, groups, &ngroups) == -1) {
-            free(groups);
-            ngroups++;
-            groups = (gid_t*) malloc(sizeof(gid_t) * ngroups);
+        if (initgroups(username.toStdString().data(), pw->pw_gid) == -1) {
+            qDebug() << "Setting groups failed. Falling back to setting GID.";
+            setgid(pw->pw_gid);
         }
-        setgroups(ngroups, groups);
 
+        setuid(pw->pw_uid);
         chdir(pw->pw_dir);
 
         //Start DBus
