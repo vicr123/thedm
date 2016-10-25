@@ -21,7 +21,7 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     //TODO: Correct these environment variables
     qputenv("XDG_SESSION_PATH", "/org/freedesktop/DisplayManager/Session0");
     qputenv("XDG_SEAT_PATH", "/org/freedesktop/DisplayManager/Seat0");
-    qputenv("XDG_SEAT", "seat0");
+    //qputenv("XDG_SEAT", "seat0");
 
     const char *data[2];
     data[0] = username.toStdString().data();
@@ -41,8 +41,8 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
         return false;
     }
 
-    pam_misc_setenv(pamHandle, "XDG_SEAT", "seat0", false);
-    pam_misc_setenv(pamHandle, "XDG_VTNR", sessionInterface.property("VTNr").toString().toUtf8(), false);
+    /*pam_misc_setenv(pamHandle, "XDG_SEAT", "seat0", false);
+    pam_misc_setenv(pamHandle, "XDG_VTNR", sessionInterface.property("VTNr").toString().toUtf8(), false);*/
 
     result = pam_authenticate(pamHandle, 0);
     if (result != PAM_SUCCESS) {

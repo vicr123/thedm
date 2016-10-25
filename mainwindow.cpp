@@ -234,7 +234,7 @@ void MainWindow::on_loginButton_clicked()
             closeWindows();
             showCover();
 
-            QTimer* checkRunTimer = new QTimer();
+            /*QTimer* checkRunTimer = new QTimer();
             checkRunTimer->setInterval(1000);
             connect(checkRunTimer, &QTimer::timeout, [=]() {
                 int status;
@@ -245,7 +245,10 @@ void MainWindow::on_loginButton_clicked()
                     openWindows();
                 }
             });
-            checkRunTimer->start();
+            checkRunTimer->start();*/
+
+            int status;
+            waitpid(processId, &status, 0);
         } else {
             //We're just switching sessions. Show the cover again.
             showCover();
