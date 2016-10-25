@@ -13,15 +13,18 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = thedm
 TEMPLATE = app
 
+DBUS_ADAPTORS += org.freedesktop.DisplayManager.Seat.xml
 
 SOURCES += main.cpp\
         mainwindow.cpp \
     coverframe.cpp \
-    pam.cpp
+    pam.cpp \
+    dbusseat.cpp
 
 HEADERS  += mainwindow.h \
     coverframe.h \
-    pam.h
+    pam.h \
+    dbusseat.h
 
 FORMS    += mainwindow.ui
 

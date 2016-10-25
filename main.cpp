@@ -4,6 +4,7 @@
 #include <QX11Info>
 #include <QDBusMetaType>
 #include "mainwindow.h"
+#include "dbusseat.h"
 #include <X11/extensions/Xrandr.h>
 #include <iostream>
 
@@ -95,6 +96,7 @@ int main(int argc, char *argv[])
     a.setApplicationName("theDM");
     QIcon::setThemeName("breeze");
 
+    new DBusSeat();
     if (!QDBusConnection::systemBus().interface()->registeredServiceNames().value().contains("org.thesute.thedm")) {
         QDBusConnection::systemBus().registerService("org.thesuite.thedm");
     }
