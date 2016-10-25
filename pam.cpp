@@ -41,6 +41,9 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
         return false;
     }
 
+    pam_misc_setenv(pamHandle, "XDG_SEAT", "seat0", false);
+    pam_misc_setenv(pamHandle, "XDG_VTNR", sessionInterface.property("VTNr").toString().toUtf8(), false);
+
     result = pam_authenticate(pamHandle, 0);
     if (result != PAM_SUCCESS) {
         //ERROR ERROR

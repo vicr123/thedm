@@ -6,7 +6,7 @@
 
 QT       += core gui x11extras dbus
 CONFIG   += c++11
-LIBS     += -lX11 -lpam
+LIBS     += -lX11 -lpam -lpam_misc
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
