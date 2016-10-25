@@ -11,6 +11,7 @@
 #include <grp.h>
 #include <paths.h>
 #include <unistd.h>
+#include <sys/mman.h>
 #include <X11/Xlib.h>
 #include <QDBusConnection>
 #include <QDBusMessage>

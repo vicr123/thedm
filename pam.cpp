@@ -5,6 +5,9 @@ extern QString currentVt;
 static pam_handle_t *pamHandle;
 QString currentPassword, currentUsername;
 bool login(QString username, QString password, QString execFile, pid_t *child_pid, QDBusObjectPath* resumeSession) {
+    //Prevent paging to disk
+    mlockall(MCL_CURRENT | MCL_FUTURE);
+
     //Set XDG environment variables
     //Get current user information
     struct passwd *pw = getpwnam(username.toStdString().data());
@@ -100,6 +103,20 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     qputenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/bin");
     qputenv("MAIL", _PATH_MAILDIR);
     qputenv("XAUTHORITY", QByteArray(pw->pw_dir) + "/.Xauthority");
+    qputenv("XDG_SESSION_CLASS", "user");
+
+    //Set up environment variables fiven by PAM
+    char** pamEnv = pam_getenvlist(pamHandle);
+    for (int i = 0; pamEnv[i] != NULL; i++) {
+        QString variable = QString::fromLocal8Bit(pamEnv[i]);
+        int equalIndex = variable.indexOf("=");
+        if (equalIndex != -1) {
+            qputenv(variable.left(equalIndex).toUtf8(), variable.mid(equalIndex + 1).toUtf8());
+        }
+
+        free(pamEnv[i]);
+    }
+    free(pamEnv);
 
     //Blank out the current password
     currentPassword = "";
@@ -142,6 +159,8 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
 }
 
 bool logout() {
+    qputenv("XDG_SESSION_CLASS", "greeter");
+
     int result = pam_close_session(pamHandle, 0);
     if (result != PAM_SUCCESS) {
         //ERROR ERROR
