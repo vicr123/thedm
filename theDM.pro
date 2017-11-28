@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui x11extras dbus
+QT       += core gui x11extras dbus thelib
 CONFIG   += c++11
 LIBS     += -lX11 -lpam -lpam_misc
 

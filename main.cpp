@@ -32,6 +32,7 @@ void openWindows() {
 int main(int argc, char *argv[])
 {
     qputenv("XDG_SESSION_CLASS", "greeter");
+    qputenv("QT_QPA_PLATFORMTHEME", "ts");
     QProcess* XServerProcess = NULL;
 
     if (argc > 1) {
@@ -44,7 +45,7 @@ int main(int argc, char *argv[])
             std::cout << "  -h, --help                   Show this help output\n";
             std::cout << "                               This must be the first argument passed to theDM.\n";
             std::cout << "\n";
-            std::cout << "If vtx is not passed, and $DISPLAY=\"\", theShell will start an X server on the "
+            std::cout << "If vtx is not passed, and $DISPLAY=\"\", theDM will start an X server on the "
                          "current virtual terminal.\n";
             return 0;
         }
@@ -52,12 +53,6 @@ int main(int argc, char *argv[])
 
     if (qgetenv("DISPLAY") == "") {
         //Start the X server
-        int display;
-        for (display = 0; QFile("/tmp/.X" + QString::number(display) + "-lock").exists(); display++) {
-            //Do nothing and go over the loop again.
-            //In effect, we open a X server on the next available display number.
-        }
-
         QString currentVt = "";
         if (argc > 1) {
             QString firstArg = argv[1];
@@ -80,12 +75,29 @@ int main(int argc, char *argv[])
             currentVt = "vt" + QString(vtGet.readAll());
         }
 
-        XServerProcess = new QProcess();
-        XServerProcess->start("/usr/bin/X :" + QString::number(display) + " " + currentVt);
-        XServerProcess->waitForStarted();
-        sleep(1);
-        qputenv("DISPLAY", QString(":" + QString::number(display)).toUtf8());
+        bool serverStarted = false;
+        int display = 0;
+        do {
+            qDebug() << QString("Starting the X Server as display :" + QString::number(display) + " on " + currentVt).toStdString().data();
+            XServerProcess = new QProcess();
+            XServerProcess->setProcessChannelMode(QProcess::ForwardedChannels);
+            XServerProcess->start("/usr/bin/X :" + QString::number(display) + " " + currentVt);
+            XServerProcess->waitForFinished(1000);
+
+            if (XServerProcess->state() != QProcess::Running) {
+                display++;
+            } else {
+                if (!qputenv("DISPLAY", QString(":" + QString::number(display)).toUtf8())) {
+                    qDebug() << "Could not set DISPLAY environment variable.";
+                    XServerProcess->kill();
+                    return 1;
+                }
+
+                serverStarted = true;
+            }
+        } while (!serverStarted);
     }
+
     QApplication a(argc, argv);
     a.setQuitOnLastWindowClosed(false);
     qRegisterMetaType<QStringDBusObjectPathMap>();
@@ -94,7 +106,6 @@ int main(int argc, char *argv[])
     a.setOrganizationName("theSuite");
     a.setOrganizationDomain("");
     a.setApplicationName("theDM");
-    QIcon::setThemeName("breeze");
 
     new DBusSeat();
     if (!QDBusConnection::systemBus().interface()->registeredServiceNames().value().contains("org.thesute.thedm")) {
@@ -187,8 +198,8 @@ int main(int argc, char *argv[])
         XSync(QX11Info::display(), false);
     }*/
 
-    XGrabKeyboard(QX11Info::display(), RootWindow(QX11Info::display(), 0), True, GrabModeAsync, GrabModeAsync, CurrentTime);
-    XGrabPointer(QX11Info::display(), RootWindow(QX11Info::display(), 0), True, None, GrabModeAsync, GrabModeAsync, RootWindow(QX11Info::display(), 0), None, CurrentTime);
+    //XGrabKeyboard(QX11Info::display(), RootWindow(QX11Info::display(), 0), True, GrabModeAsync, GrabModeAsync, CurrentTime);
+    //XGrabPointer(QX11Info::display(), RootWindow(QX11Info::display(), 0), True, None, GrabModeAsync, GrabModeAsync, RootWindow(QX11Info::display(), 0), None, CurrentTime);
 
 
     //Listen out for screen changes

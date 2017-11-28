@@ -12,6 +12,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->incorrectPassword->setVisible(false);
 
+    settings = new QSettings("/etc/thedm.conf", QSettings::IniFormat);
+
     //QRect screenGeometry = QApplication::desktop()->screenGeometry();
     ui->Cover->setParent(this);
     ui->Cover->setGeometry(0, 0, this->width(), this->height());
@@ -35,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->sessionSelect->setMenu(sessionsMenu);
 
     //Load users
-    for (int i = 1000; i < 10000; i++) {
+    for (int i = settings->value("users/uidMin", 1000).toInt(); i < settings->value("users/uidMax", 10000).toInt(); i++) {
         //Get user info
         struct passwd *pw = getpwuid(i);
         if (pw != NULL) {
@@ -234,7 +236,7 @@ void MainWindow::on_loginButton_clicked()
             closeWindows();
             showCover();
 
-            /*QTimer* checkRunTimer = new QTimer();
+            QTimer* checkRunTimer = new QTimer();
             checkRunTimer->setInterval(1000);
             connect(checkRunTimer, &QTimer::timeout, [=]() {
                 int status;
@@ -245,7 +247,7 @@ void MainWindow::on_loginButton_clicked()
                     openWindows();
                 }
             });
-            checkRunTimer->start();*/
+            checkRunTimer->start();
 
             int status;
             waitpid(processId, &status, 0);
@@ -324,7 +326,7 @@ void MainWindow::on_usernameBox_currentIndexChanged(int index)
 
 void MainWindow::on_powerButton_clicked()
 {
-    ui->confirmPowerFrame->setGeometry(0, this->height(), this->width(), ui->confirmPowerFrame->sizeHint().height());
+    /*ui->confirmPowerFrame->setGeometry(0, this->height(), this->width(), ui->confirmPowerFrame->sizeHint().height());
     ui->confirmPowerFrame->setVisible(true);
     //ui->powerOptionsFrame->setVisible(false);
     QPropertyAnimation* anim = new QPropertyAnimation(ui->confirmPowerFrame, "geometry");
@@ -333,7 +335,61 @@ void MainWindow::on_powerButton_clicked()
     anim->setDuration(500);
     anim->setEasingCurve(QEasingCurve::OutCubic);
     connect(anim, SIGNAL(finished()), anim, SLOT(deleteLater()));
-    anim->start();
+    anim->start();*/
+
+    tToast* toast = new tToast();
+    QMap<QString, QString> actions;
+    actions.insert("reboot", "Reboot");
+    actions.insert("off", "Power Off");
+    actions.insert("no", "Cancel");
+
+    toast->setTitle("Power Off");
+    toast->setText("You're about to power off your PC. Are you sure?");
+    toast->setActions(actions);
+    toast->setTimeout(30000);
+
+    QString* action = new QString();
+    connect(toast, &tToast::doDefaultOption, [=, &action] {
+        toast->announceAction("Powering off...");
+        action = new QString("off");
+    });
+    connect(toast, &tToast::actionClicked, [=, &action](QString key) {
+        if (key == "no") return;
+
+        if (key == "reboot") {
+            toast->announceAction("Rebooting...");
+        } else if (key == "off") {
+            toast->announceAction("Powering off...");
+        }
+        QGraphicsOpacityEffect* effect = new QGraphicsOpacityEffect;
+        ui->lockFrame->setGraphicsEffect(effect);
+
+        tPropertyAnimation* anim = new tPropertyAnimation(effect, "opacity");
+        anim->setStartValue((float) 1);
+        anim->setEndValue((float) 0);
+        anim->setDuration(250);
+        anim->start();
+
+        action = new QString(key);
+    });
+    connect(toast, &tToast::dismissed, [=] {
+        /*if (action == "reboot") {
+            //Reboot the PC
+            QDBusMessage message = QDBusMessage::createMethodCall("org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "Reboot");
+            QList<QVariant> arguments;
+            arguments.append(true);
+            message.setArguments(arguments);
+            QDBusConnection::systemBus().send(message);
+        } else if (action == "off") {
+            //Power off the PC
+            QDBusMessage message = QDBusMessage::createMethodCall("org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "PowerOff");
+            QList<QVariant> arguments;
+            arguments.append(true);
+            message.setArguments(arguments);
+            QDBusConnection::systemBus().send(message);
+        }*/
+    });
+    toast->show(this);
 }
 
 void MainWindow::on_cancelPowerOptions_clicked()

@@ -24,6 +24,8 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QPushButton>
+#include <ttoast.h>
+#include <QGraphicsOpacityEffect>
 #include "pam.h"
 
 #include <sys/wait.h>
@@ -95,6 +97,8 @@ private:
 
     QString sessionExec;
     QDBusObjectPath* sessionPath;
+
+    QSettings* settings;
 };
 
 #endif // MAINWINDOW_H
