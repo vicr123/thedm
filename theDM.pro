@@ -30,3 +30,19 @@ FORMS    += mainwindow.ui
 
 RESOURCES += \
     resources.qrc
+
+
+unix {
+    target.path = /usr/bin/
+
+    #translations.files = translations/*
+    #translations.path = /usr/share/thedm/translations
+
+    systemd.files = thedm.service
+    systemd.path = /usr/lib/systemd/system
+
+    INSTALLS += target systemd #translations
+}
+
+DISTFILES += \
+    thedm.service
