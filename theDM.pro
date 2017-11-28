@@ -41,8 +41,12 @@ unix {
     systemd.files = thedm.service
     systemd.path = /usr/lib/systemd/system
 
-    INSTALLS += target systemd #translations
+    pam.files = thedm.pam
+    pam.path = /etc/pam.d/
+
+    INSTALLS += target systemd pam #translations
 }
 
 DISTFILES += \
-    thedm.service
+    thedm.service \
+    thedm.pam
