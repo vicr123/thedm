@@ -33,6 +33,7 @@
 #include <QMenu>
 #include <QDir>
 #include <QSysInfo>
+#include <tvirtualkeyboard.h>
 #include <ttoast.h>
 #include "pam.h"
 
@@ -108,6 +109,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
                 QTimer::singleShot(100, [=] {
                     ui->PasswordUnderline->startAnimation();
+                    tVirtualKeyboard::instance()->showKeyboard();
                 });
             });
         }
@@ -154,6 +156,14 @@ MainWindow::MainWindow(QWidget *parent) :
     passwordFrameOpacity = new QGraphicsOpacityEffect();
     passwordFrameOpacity->setOpacity(0);
     ui->passwordFrame->setGraphicsEffect(passwordFrameOpacity);
+
+    connect(tVirtualKeyboard::instance(), &tVirtualKeyboard::keyboardVisibleChanged, [=](bool visible) {
+        if (visible) {
+            this->setGeometry(QApplication::screens().first()->geometry().adjusted(0, 0, 0, -tVirtualKeyboard::instance()->height()));
+        } else {
+            this->setGeometry(QApplication::screens().first()->geometry());
+        }
+    });
 }
 
 MainWindow::~MainWindow()

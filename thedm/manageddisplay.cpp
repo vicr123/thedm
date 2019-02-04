@@ -20,6 +20,8 @@
 #include "manageddisplay.h"
 #include <QProcess>
 #include <QDebug>
+#include <QSettings>
+#include <QThread>
 
 struct ManagedDisplayPrivate {
     QProcess* x11Process = nullptr;
@@ -30,16 +32,19 @@ ManagedDisplay::ManagedDisplay(QString seat, QString vt, QObject *parent) : QObj
 {
     d = new ManagedDisplayPrivate();
 
+    QSettings settings("/etc/thedm.conf", QSettings::IniFormat);
+
     //Spawn X on the seat and VT
     int display = 0;
     bool serverStarted = false;
+    QString dpi = QString::number(settings.value("screen/dpi", 96).toInt());
     while (!serverStarted) {
         if (d->x11Process != nullptr) {
             d->x11Process->deleteLater();
         }
 
         d->x11Process = new QProcess();
-        d->x11Process->start("/usr/bin/X :" + QString::number(display) + " " + vt);
+        d->x11Process->start("/usr/bin/X :" + QString::number(display) + " " + vt + " -dpi " + dpi);
         d->x11Process->waitForFinished(1000);
 
         if (d->x11Process->state() != QProcess::Running) {
@@ -51,6 +56,7 @@ ManagedDisplay::ManagedDisplay(QString seat, QString vt, QObject *parent) : QObj
     }
 
     qputenv("QT_QPA_PLATFORMTHEME", "ts");
+    qputenv("QT_IM_MODULE", "ts-kbd");
 
     //Spawn the greeter
     d->greeterProcess = new QProcess();
