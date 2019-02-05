@@ -18,6 +18,7 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
 
     //Get Current Session
     QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
+    QDBusInterface userInterface("org.freedesktop.login1", "/org/freedesktop/login1/user/self", "org.freedesktop.login1.User", QDBusConnection::systemBus());
     /*qputenv("XDG_SESSION_ID", sessionInterface.property("Id").toString().toUtf8());
     qputenv("XDG_VTNR", sessionInterface.property("VTNr").toString().toUtf8());
     qputenv("XDG_RUNTIME_DIR", QString("/run/user/" + QString::number(pw->pw_uid)).toUtf8());*/
@@ -44,6 +45,7 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
         return false;
     }
 
+    pam_set_item(pamHandle, PAM_USER, username.toUtf8().data());
     pam_set_item(pamHandle, PAM_XDISPLAY, qgetenv("DISPLAY").data());
     pam_set_item(pamHandle, PAM_TTY, qgetenv("DISPLAY").data());
     pam_misc_setenv(pamHandle, "XDG_SEAT", "seat0", false);
@@ -82,10 +84,6 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
         return false;
     }
 
-    //Release keyboard and mouse locks
-    XUngrabKeyboard(QX11Info::display(), CurrentTime);
-    XUngrabPointer(QX11Info::display(), CurrentTime);
-
     //At this point, the user is authenticated.
     //If the user currently has a session that should be unlocked, activate that session now.
     if (resumeSession != NULL) {
@@ -111,6 +109,7 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
         return false;
     }
 
+
     //Set up other environment variables
     pam_putenv(pamHandle, QString("HOME=").append(pw->pw_dir).toLocal8Bit().data());
     pam_putenv(pamHandle, QString("PWD=").append(pw->pw_dir).toLocal8Bit().data());
@@ -121,6 +120,7 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     pam_putenv(pamHandle, QString("XAUTHORITY=").append(pw->pw_dir).append("/.Xauthority").toLocal8Bit().data());
     pam_putenv(pamHandle, QString("DISPLAY=").append(qgetenv("DISPLAY")).toLocal8Bit().data());
     pam_putenv(pamHandle, QString("PATH=").append(qgetenv("PATH")).toLocal8Bit().data());
+    pam_putenv(pamHandle, QString("XDG_RUNTIME_DIR=").append(userInterface.property("RuntimePath").toString()).toLocal8Bit().data());
     pam_putenv(pamHandle, "XDG_SESSION_CLASS=user");
     //pam_putenv(pamHandle, QString("DISPLAY").append(pw->pw_dir).append("/.Xauthority").toLocal8Bit().data());
     /*qputenv("PWD", pw->pw_dir);
@@ -149,6 +149,9 @@ bool login(QString username, QString password, QString execFile, pid_t *child_pi
     for (QString env : QString(dbusLaunch->readAll()).split("\n")) {
         pam_putenv(pamHandle, env.toLocal8Bit().data());
     }
+
+    //Start Pulse
+    QProcess::startDetached("pulseaudio");
 
     //Start the new process
     QStringList execParts = execFile.split(" ");
