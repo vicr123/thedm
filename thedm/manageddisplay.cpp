@@ -29,7 +29,7 @@ struct ManagedDisplayPrivate {
     QProcess* greeterProcess = nullptr;
 };
 
-ManagedDisplay::ManagedDisplay(QString seat, QString vt, QObject *parent) : QObject(parent)
+ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(parent)
 {
     d = new ManagedDisplayPrivate();
 
@@ -45,7 +45,7 @@ ManagedDisplay::ManagedDisplay(QString seat, QString vt, QObject *parent) : QObj
         }
 
         d->x11Process = new QProcess();
-        d->x11Process->start("/usr/bin/X :" + QString::number(display) + " " + vt + " -dpi " + dpi);
+        d->x11Process->start("/usr/bin/X :" + QString::number(display) + " vt" + QString::number(vt) + " -dpi " + dpi);
         d->x11Process->waitForFinished(1000);
 
         if (d->x11Process->state() != QProcess::Running) {
@@ -55,6 +55,9 @@ ManagedDisplay::ManagedDisplay(QString seat, QString vt, QObject *parent) : QObj
             serverStarted = true;
         }
     }
+
+    qputenv("QT_QPA_PLATFORMTHEME", "ts");
+    qputenv("QT_IM_MODULE", "ts-kbd");
 
     //Find the greeter path
     QStringList possibleGreeters = theLibsGlobal::searchInPath("thedm-greeter");
@@ -69,6 +72,9 @@ ManagedDisplay::ManagedDisplay(QString seat, QString vt, QObject *parent) : QObj
     //Spawn the greeter
     d->greeterProcess = new QProcess();
     d->greeterProcess->start(possibleGreeters.first());
+    d->greeterProcess->setArguments({
+        QString::number(vt)
+    });
     d->greeterProcess->setProcessEnvironment(env);
     d->greeterProcess->setProcessChannelMode(QProcess::ForwardedChannels);
     connect(d->greeterProcess, QOverload<int>::of(&QProcess::finished), [=] {

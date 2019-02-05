@@ -39,6 +39,10 @@ void PamBackend::putenv(QString env, QString var) {
     pam_putenv(pamHandle, QString("%1=%2").arg(env, var).toLocal8Bit().data());
 }
 
+QString PamBackend::getenv(QString env) {
+    return pam_getenv(pamHandle, env.toLocal8Bit().data());
+}
+
 bool PamBackend::startSession(QString exec) {
     if (pam_open_session(this->pamHandle, 0) != PAM_SUCCESS) {
         return false;

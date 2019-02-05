@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     if (!vtOk) {
         vt = 1;
     }
-    ManagedDisplay* d = new ManagedDisplay("seat0", "vt" + QString::number(vt));
+    ManagedDisplay* d = new ManagedDisplay("seat0", vt);
 
     return a.exec();
 }

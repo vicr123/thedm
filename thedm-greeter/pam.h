@@ -63,6 +63,7 @@ class PamBackend : public QObject {
         bool setCred();
         bool startSession(QString exec);
         void putenv(QString env, QString value);
+        QString getenv(QString env);
 
     signals:
         void inputRequired(bool echo, QString msg, PamInputCallback callback);

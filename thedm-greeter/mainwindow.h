@@ -35,7 +35,7 @@ class MainWindow : public QMainWindow
         Q_OBJECT
 
     public:
-        explicit MainWindow(QWidget *parent = nullptr);
+        explicit MainWindow(QString vtnr, QWidget *parent = nullptr);
         ~MainWindow();
 
     public slots:
@@ -101,6 +101,8 @@ class MainWindow : public QMainWindow
 
         QString currentLoginUsername;
         QString sessionExec;
+
+        QString vtnr;
 
         QSettings* settings;
 

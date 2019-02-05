@@ -19,20 +19,36 @@
  * *************************************/
 #include "mainwindow.h"
 #include <QApplication>
+#include <QCommandLineParser>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+    /*QCommandLineParser parser;
+    parser.addPositionalArgument("vt", "The VT to display on");
+
+    parser.process(a);
+    QString vtString = parser.positionalArguments().first();
+
+    bool vtIntOk;
+    vtString.toInt(&vtIntOk);
+    if (!vtIntOk) {
+        //TODO: Yell error
+        return 1;
+    }*/
+
     PamBackend backend("root", "sddm-greeter");
-    backend.putenv("DESKTOP", qgetenv("DESKTOP"));
+    backend.putenv("DISPLAY", qgetenv("DISPLAY"));
     backend.putenv("XDG_SESSION_CLASS", "greeter");
     backend.authenticate();
     backend.acctMgmt();
     backend.setCred();
     backend.startSession("");
 
-    MainWindow w;
+    qDebug() << backend.getenv("XDG_RUNTIME_DIR");
+
+    MainWindow w("1");
     w.showFullScreen();
 
     return a.exec();

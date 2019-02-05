@@ -45,12 +45,14 @@
 #undef KeyPress
 #undef KeyRelease
 
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::MainWindow(QString vtnr, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     settings = new QSettings("/etc/thedm.conf", QSettings::IniFormat);
+
+    this->vtnr = vtnr;
 
     background = settings->value("background", "/usr/share/tsscreenlock/triangles.svg").toString();
     ui->pagesStack->setCurrentAnimation(tStackedWidget::SlideHorizontal);
@@ -161,6 +163,8 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
 
     pamBackend = new PamBackend(username);
     pamBackend->putenv("DISPLAY", qgetenv("DISPLAY"));
+    pamBackend->putenv("XDG_SESSION_CLASS", "user");
+    //pamBackend->putenv("XDG_VTNR", vtnr);
     connect(pamBackend, &PamBackend::inputRequired, [=](bool echo, QString msg, PamInputCallback callback) {
         qDebug() << "Echo: " << echo;
         qDebug() << "Message: " << msg;
@@ -208,8 +212,6 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
     if (!pamBackend->setCred()) {
         failLoginUser("PAM Credential Management failed");
     }
-
-    pamBackend->putenv("XDG_SESSION_CLASS", "user");
 
     if (!pamBackend->startSession(sessionExec)) {
         failLoginUser("Session unable to be opened");

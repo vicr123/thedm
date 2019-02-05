@@ -27,7 +27,7 @@ class ManagedDisplay : public QObject
 {
         Q_OBJECT
     public:
-        explicit ManagedDisplay(QString seat, QString vt, QObject *parent = nullptr);
+        explicit ManagedDisplay(QString seat, int vt, QObject *parent = nullptr);
         ~ManagedDisplay();
 
     signals:
