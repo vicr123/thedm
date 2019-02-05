@@ -62,7 +62,6 @@ bool PamBackend::startSession(QString exec) {
     pam_putenv(pamHandle, QString("XAUTHORITY=").append(pw->pw_dir).append("/.Xauthority").toLocal8Bit().data());
     pam_putenv(pamHandle, QString("DISPLAY=").append(qgetenv("DISPLAY")).toLocal8Bit().data());
     pam_putenv(pamHandle, QString("PATH=").append(qgetenv("PATH")).toLocal8Bit().data());
-    pam_putenv(pamHandle, QString("XDG_RUNTIME_DIR=").append(userInterface.property("RuntimePath").toString()).toLocal8Bit().data());
     //pam_putenv(pamHandle, "XDG_SESSION_CLASS=user");
 
     //Blank out the current password
