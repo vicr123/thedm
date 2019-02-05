@@ -22,6 +22,7 @@
 #include <QDebug>
 #include <QSettings>
 #include <QThread>
+#include <the-libs_global.h>
 
 struct ManagedDisplayPrivate {
     QProcess* x11Process = nullptr;
@@ -58,12 +59,21 @@ ManagedDisplay::ManagedDisplay(QString seat, QString vt, QObject *parent) : QObj
     qputenv("QT_QPA_PLATFORMTHEME", "ts");
     qputenv("QT_IM_MODULE", "ts-kbd");
 
+    //Find the greeter path
+    QStringList possibleGreeters = theLibsGlobal::searchInPath("thedm-greeter");
+    if (possibleGreeters.count() == 0) {
+        possibleGreeters.append("../thedm-greeter/thedm-greeter");
+    }
+
     //Spawn the greeter
     d->greeterProcess = new QProcess();
-    d->greeterProcess->start("../thedm-greeter/thedm-greeter");
+    d->greeterProcess->start(possibleGreeters.first());
     d->greeterProcess->setProcessChannelMode(QProcess::ForwardedChannels);
     connect(d->greeterProcess, QOverload<int>::of(&QProcess::finished), [=] {
         this->deleteLater();
+    });
+    connect(d->greeterProcess, QOverload<QProcess::ProcessError>::of(&QProcess::error), [=] {
+        qWarning() << "Cannot spawn greeter process.";
     });
 }
 

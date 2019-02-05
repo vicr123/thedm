@@ -1,4 +1,5 @@
 QT -= gui
+QT += thelib
 
 CONFIG += c++11 console
 CONFIG -= app_bundle
@@ -18,10 +19,24 @@ SOURCES += \
         main.cpp \
     manageddisplay.cpp
 
-# Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
-!isEmpty(target.path): INSTALLS += target
-
 HEADERS += \
     manageddisplay.h
+
+DISTFILES += \
+    thedm.service \
+    thedm.pam
+
+unix {
+    target.path = /usr/bin/
+
+    #translations.files = translations/*
+    #translations.path = /usr/share/thedm/translations
+
+    systemd.files = thedm.service
+    systemd.path = /usr/lib/systemd/system
+
+    pam.files = thedm.pam
+    pam.path = /etc/pam.d/
+
+    INSTALLS += target systemd pam #translations
+}
