@@ -33,6 +33,7 @@
 #include <QMenu>
 #include <QDir>
 #include <QSysInfo>
+#include <QMessageBox>
 #include <tvirtualkeyboard.h>
 #include <ttoast.h>
 #include "pam.h"
@@ -164,6 +165,7 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
     pamBackend = new PamBackend(username);
     pamBackend->putenv("DISPLAY", qgetenv("DISPLAY"));
     pamBackend->putenv("XDG_SESSION_CLASS", "user");
+    pamBackend->putenv("XDG_SESSION_TYPE", "x11");
     //pamBackend->putenv("XDG_VTNR", vtnr);
     connect(pamBackend, &PamBackend::inputRequired, [=](bool echo, QString msg, PamInputCallback callback) {
         qDebug() << "Echo: " << echo;
@@ -192,7 +194,9 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
         this->setEnabled(true);
     });
     connect(pamBackend, &PamBackend::message, [=](QString warning, PamMessageCallback callback) {
-        qDebug() << "WARNING: " << warning;
+        QMessageBox::warning(this, "Warning", warning);
+        callback();
+        //qWarning() << "WARNING: " << warning;
     });
 
     if (!pamBackend->authenticate()) {
@@ -204,6 +208,8 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
 
     //TODO: Check to see if a password was not input and pause the PAM transaction here if so
 
+
+    pamBackend->putenv("XDG_SESSION_DESKTOP", "theShell");
     if (!pamBackend->acctMgmt()) {
         failLoginUser("PAM Account Management failed");
         return;

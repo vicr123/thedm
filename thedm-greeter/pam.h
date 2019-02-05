@@ -40,10 +40,6 @@ inline const QDBusArgument &operator>>(const QDBusArgument &arg, QStringDBusObje
     return arg;
 }
 
-bool login(QString username, QString password, QString exec, pid_t *child_pid, QDBusObjectPath* resumeSession = NULL);
-bool logout();
-int conversation(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr);
-
 typedef std::function<void(QString,bool)> PamInputCallback;
 typedef std::function<void()> PamMessageCallback;
 
