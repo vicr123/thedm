@@ -95,22 +95,7 @@ MainWindow::MainWindow(QWidget *parent) :
             }
             ui->userList->addWidget(userButton);
             connect(userButton, &QPushButton::clicked, [=] {
-                ui->usernameLabel->setText(tr("Hi %1!").arg(userButton->text()));
-                ui->pagesStack->setCurrentIndex(1);
-                currentLoginUsername = username;
-
-                if (QFile(home + "/.theshell/mousepassword").exists()) {
-                    ui->mousePasswordWarning->setVisible(true);
-                    ui->LoginOptions->setVisible(true);
-                } else {
-                    ui->mousePasswordWarning->setVisible(false);
-                    ui->LoginOptions->setVisible(false);
-                }
-
-                QTimer::singleShot(100, [=] {
-                    ui->PasswordUnderline->startAnimation();
-                    tVirtualKeyboard::instance()->showKeyboard();
-                });
+                attemptLoginUser(username, userButton->text(), home);
             });
         }
     }
@@ -169,6 +154,79 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::attemptLoginUser(QString username, QString displayName, QString homeDir) {
+    this->setEnabled(false);
+
+    pamBackend = new PamBackend(username);
+    pamBackend->putenv("DISPLAY", qgetenv("DISPLAY"));
+    connect(pamBackend, &PamBackend::inputRequired, [=](bool echo, QString msg, PamInputCallback callback) {
+        qDebug() << "Echo: " << echo;
+        qDebug() << "Message: " << msg;
+
+        if (msg == "Password: ") {
+            ui->usernameLabel->setText(tr("Hi %1!").arg(displayName));
+            ui->pagesStack->setCurrentIndex(1);
+            currentLoginUsername = username;
+
+            if (QFile(homeDir + "/.theshell/mousepassword").exists()) {
+                ui->mousePasswordWarning->setVisible(true);
+                ui->LoginOptions->setVisible(true);
+            } else {
+                ui->mousePasswordWarning->setVisible(false);
+                ui->LoginOptions->setVisible(false);
+            }
+
+            QTimer::singleShot(100, [=] {
+                ui->PasswordUnderline->startAnimation();
+                tVirtualKeyboard::instance()->showKeyboard();
+            });
+        } else {
+
+        }
+        this->setEnabled(true);
+    });
+    connect(pamBackend, &PamBackend::message, [=](QString warning, PamMessageCallback callback) {
+        qDebug() << "WARNING: " << warning;
+    });
+
+    if (!pamBackend->authenticate()) {
+        failLoginUser(tr("Authentication failed."));
+        //Try to log in again
+        attemptLoginUser(username, displayName, homeDir);
+        return;
+    }
+
+    //TODO: Check to see if a password was not input and pause the PAM transaction here if so
+
+    if (!pamBackend->acctMgmt()) {
+        failLoginUser("PAM Account Management failed");
+        return;
+    }
+
+    if (!pamBackend->setCred()) {
+        failLoginUser("PAM Credential Management failed");
+    }
+
+    pamBackend->putenv("XDG_SESSION_CLASS", "user");
+
+    if (!pamBackend->startSession(sessionExec)) {
+        failLoginUser("Session unable to be opened");
+    }
+}
+
+void MainWindow::failLoginUser(QString reason) {
+    tToast* toast = new tToast();
+    toast->setTitle(tr("Couldn't log in"));
+    toast->setText(reason);
+    connect(toast, &tToast::dismissed, toast, &tToast::deleteLater);
+    toast->show(this);
+
+    this->setEnabled(true);
+    if (reason != tr("Authentication failed.")) {
+        ui->pagesStack->setCurrentIndex(0);
+    }
 }
 
 void MainWindow::showFullScreen() {
@@ -607,78 +665,9 @@ void MainWindow::on_goBackButton_clicked()
 
 void MainWindow::on_unlockButton_clicked()
 {
-    ui->password->setEnabled(false);
-    ui->unlockButton->setEnabled(false);
-
-    //TODO: check with PAM and start the session
-    pid_t processId;
-    if (login(currentLoginUsername, ui->password->text(), sessionExec, &processId, nullptr)) {
-        /*
-        if (sessionPath == NULL) {
-            closeWindows();
-            showCover();
-
-            QTimer* checkRunTimer = new QTimer();
-            checkRunTimer->setInterval(1000);
-            connect(checkRunTimer, &QTimer::timeout, [=]() {
-                int status;
-                if (waitpid(processId, &status, WNOHANG) != 0) {
-                    checkRunTimer->stop();
-                    checkRunTimer->deleteLater();
-                    logout();
-                    openWindows();
-                }
-            });
-            checkRunTimer->start();
-
-            int status;
-            waitpid(processId, &status, 0);
-        } else {
-            //We're just switching sessions. Show the cover again.
-            showCover();
-        }        */
-    } else {
-        ui->password->setText("");
-
-        tToast* toast = new tToast();
-        toast->setTitle(tr("Incorrect Password"));
-        toast->setText(tr("The password you entered was incorrect. Please enter your password again."));
-        connect(toast, SIGNAL(dismissed()), toast, SLOT(deleteLater()));
-        toast->show(this);
-
-        ui->password->setEnabled(true);
-        ui->unlockButton->setEnabled(true);
-        ui->password->setFocus();
-    }
-
-    /*
-    QProcess tscheckpass;
-    tscheckpass.start("tscheckpass " + name + " " + ui->password->text());
-    tscheckpass.waitForFinished();
-    if (tscheckpass.exitCode() == 0) {
-        XUngrabKeyboard(QX11Info::display(), CurrentTime);
-        XUngrabPointer(QX11Info::display(), CurrentTime);
-
-        QApplication::exit();
-    } else {
-        QTimer::singleShot(1000, [=] {
-            ui->password->setText("");
-
-            tToast* toast = new tToast();
-            toast->setTitle(tr("Incorrect Password"));
-            toast->setText(tr("The password you entered was incorrect. Please enter your password again."));
-            connect(toast, SIGNAL(dismissed()), toast, SLOT(deleteLater()));
-            toast->show(this);
-
-            ui->password->setEnabled(true);
-            ui->unlockButton->setEnabled(true);
-            ui->password->setFocus();
-        });
-        return;
-    }*/
-
-    ui->password->setEnabled(true);
-    ui->unlockButton->setEnabled(true);
+    this->setEnabled(false);
+    pamBackend->currentInputCallback()(ui->password->text(), false);
+    ui->password->setText("");
 }
 
 void MainWindow::on_password_returnPressed()
@@ -794,6 +783,8 @@ void MainWindow::on_powerButton_clicked()
 
 void MainWindow::on_goBackUserSelect_clicked()
 {
+    pamBackend->currentInputCallback()("", true);
+    ui->password->setText("");
     ui->pagesStack->setCurrentIndex(0);
 }
 

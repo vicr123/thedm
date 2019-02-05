@@ -23,6 +23,15 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    PamBackend backend("root", "sddm-greeter");
+    backend.putenv("DESKTOP", qgetenv("DESKTOP"));
+    backend.putenv("XDG_SESSION_CLASS", "greeter");
+    backend.authenticate();
+    backend.acctMgmt();
+    backend.setCred();
+    backend.startSession("");
+
     MainWindow w;
     w.showFullScreen();
 

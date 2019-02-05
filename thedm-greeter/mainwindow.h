@@ -24,6 +24,7 @@
 #include <QDBusInterface>
 #include <QGraphicsOpacityEffect>
 #include <QSettings>
+#include "pam.h"
 
 namespace Ui {
     class MainWindow;
@@ -102,6 +103,11 @@ class MainWindow : public QMainWindow
         QString sessionExec;
 
         QSettings* settings;
+
+        PamBackend* pamBackend;
+
+        void attemptLoginUser(QString username, QString displayName, QString homeDir);
+        void failLoginUser(QString reason);
 };
 
 #endif // MAINWINDOW_H

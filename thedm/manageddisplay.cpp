@@ -56,18 +56,20 @@ ManagedDisplay::ManagedDisplay(QString seat, QString vt, QObject *parent) : QObj
         }
     }
 
-    qputenv("QT_QPA_PLATFORMTHEME", "ts");
-    qputenv("QT_IM_MODULE", "ts-kbd");
-
     //Find the greeter path
     QStringList possibleGreeters = theLibsGlobal::searchInPath("thedm-greeter");
     if (possibleGreeters.count() == 0) {
         possibleGreeters.append("../thedm-greeter/thedm-greeter");
     }
 
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    env.insert("QT_QPA_PLATFORMTHEME", "ts");
+    env.insert("QT_IM_MODULE", "ts-kbd");
+
     //Spawn the greeter
     d->greeterProcess = new QProcess();
     d->greeterProcess->start(possibleGreeters.first());
+    d->greeterProcess->setProcessEnvironment(env);
     d->greeterProcess->setProcessChannelMode(QProcess::ForwardedChannels);
     connect(d->greeterProcess, QOverload<int>::of(&QProcess::finished), [=] {
         this->deleteLater();

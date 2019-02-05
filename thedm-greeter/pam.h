@@ -12,12 +12,12 @@
 #include <paths.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <X11/Xlib.h>
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusObjectPath>
 #include <QDBusInterface>
 #include <QDBusArgument>
+#include <functional>
 
 struct QStringDBusObjectPathMap {
     QString sessionText;
@@ -43,5 +43,39 @@ inline const QDBusArgument &operator>>(const QDBusArgument &arg, QStringDBusObje
 bool login(QString username, QString password, QString exec, pid_t *child_pid, QDBusObjectPath* resumeSession = NULL);
 bool logout();
 int conversation(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr);
+
+typedef std::function<void(QString,bool)> PamInputCallback;
+typedef std::function<void()> PamMessageCallback;
+
+class PamBackend : public QObject {
+    Q_OBJECT
+
+    public:
+        PamBackend(QString username, QString sessionName = "thedm", QObject* parent = nullptr);
+        ~PamBackend();
+
+        PamInputCallback currentInputCallback();
+        PamMessageCallback currentMessageCallback();
+
+    public slots:
+        bool authenticate();
+        bool acctMgmt();
+        bool setCred();
+        bool startSession(QString exec);
+        void putenv(QString env, QString value);
+
+    signals:
+        void inputRequired(bool echo, QString msg, PamInputCallback callback);
+        void message(QString warning, PamMessageCallback callback);
+
+    private:
+        static int conversation(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr);
+        pam_handle_t* pamHandle;
+        struct passwd *pw;
+        QString username, password;
+
+        PamInputCallback inputCallback;
+        PamMessageCallback messageCallback;
+};
 
 #endif // PAM_H
