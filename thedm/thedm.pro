@@ -24,7 +24,7 @@ HEADERS += \
 
 DISTFILES += \
     thedm.service \
-    thedm
+    pam/thedm
 
 unix {
     target.path = /usr/bin/
@@ -35,7 +35,7 @@ unix {
     systemd.files = thedm.service
     systemd.path = /usr/lib/systemd/system
 
-    pam.files = thedm
+    pam.files = pam/thedm
     pam.path = /etc/pam.d/
 
     INSTALLS += target systemd pam #translations
