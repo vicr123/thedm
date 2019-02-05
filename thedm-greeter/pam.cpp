@@ -87,7 +87,6 @@ void PamBackend::runSession(QString exec) {
     QProcess::startDetached("pulseaudio");
 
     //Start the new process
-    /*
     QStringList execParts = exec.split(" ");
     char* argv[execParts.count() + 1];
     for (int i = 0; i < execParts.count(); i++) {
@@ -101,22 +100,6 @@ void PamBackend::runSession(QString exec) {
     execvpe(argv[0], argv, pam_getenvlist(pamHandle));
     qDebug() << "execl failed." << strerror(errno);
     qDebug() << "Exiting now.";
-
-    QApplication::exit();
-    return false;*/
-
-    QProcessEnvironment env;
-    char** envList = pam_getenvlist(pamHandle);
-    for (int i = 0; envList[i] != nullptr; i++) {
-        QString envvar = envList[i];
-        env.insert(envvar.left(envvar.indexOf("=")), envvar.mid(envvar.indexOf("=") + 1));
-    }
-    free(envList);
-
-    QProcess newProc;
-    newProc.setProcessEnvironment(env);
-    newProc.start(exec);
-    newProc.waitForFinished(-1);
 
     QApplication::exit();
 }
