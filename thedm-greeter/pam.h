@@ -61,9 +61,7 @@ class PamBackend : public QObject {
         bool authenticate();
         bool acctMgmt();
         bool setCred();
-        bool startSession();
-        void runSession(QString exec);
-
+        bool startSession(QString exec);
         void putenv(QString env, QString value);
         QString getenv(QString env);
 
