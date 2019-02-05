@@ -24,6 +24,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    a.setQuitOnLastWindowClosed(false);
 
     /*QCommandLineParser parser;
     parser.addPositionalArgument("vt", "The VT to display on");
@@ -44,7 +45,7 @@ int main(int argc, char *argv[])
     backend.authenticate();
     backend.acctMgmt();
     backend.setCred();
-    backend.startSession("");
+    backend.startSession();
 
     qDebug() << backend.getenv("XDG_RUNTIME_DIR");
 

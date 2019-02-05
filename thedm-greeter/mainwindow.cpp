@@ -213,9 +213,12 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
         failLoginUser("PAM Credential Management failed");
     }
 
-    if (!pamBackend->startSession(sessionExec)) {
+    if (!pamBackend->startSession()) {
         failLoginUser("Session unable to be opened");
     }
+
+    this->hide();
+    pamBackend->runSession(sessionExec);
 }
 
 void MainWindow::failLoginUser(QString reason) {

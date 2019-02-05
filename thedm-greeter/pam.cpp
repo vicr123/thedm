@@ -43,7 +43,7 @@ QString PamBackend::getenv(QString env) {
     return pam_getenv(pamHandle, env.toLocal8Bit().data());
 }
 
-bool PamBackend::startSession(QString exec) {
+bool PamBackend::startSession() {
     if (pam_open_session(this->pamHandle, 0) != PAM_SUCCESS) {
         return false;
     }
@@ -71,38 +71,54 @@ bool PamBackend::startSession(QString exec) {
     //Blank out the current password
     currentPassword = "";
 
-    if (!exec.isEmpty()) {
-        //Start DBus
-        QProcess* dbusLaunch = new QProcess;
-        dbusLaunch->start("dbus-launch");
-        dbusLaunch->waitForFinished();
-        for (QString env : QString(dbusLaunch->readAll()).split("\n")) {
-            pam_putenv(pamHandle, env.toLocal8Bit().data());
-        }
+    return true;
+}
 
-        //Start Pulse
-        QProcess::startDetached("pulseaudio");
-
-        //Start the new process
-        QStringList execParts = exec.split(" ");
-        char* argv[execParts.count() + 1];
-        for (int i = 0; i < execParts.count(); i++) {
-            argv[i] = (char*) malloc(execParts.at(i).toLocal8Bit().length());
-            strcpy(argv[i], execParts.at(i).toLocal8Bit().constData());
-            //argv[i] = execParts.at(i).toLocal8Bit().data();
-            qDebug() << argv[i];
-        }
-        argv[execParts.count()] = nullptr;
-
-        execvpe(argv[0], argv, pam_getenvlist(pamHandle));
-        qDebug() << "execl failed." << strerror(errno);
-        qDebug() << "Exiting now.";
-
-        QApplication::exit();
-        return false;
-    } else {
-        return true;
+void PamBackend::runSession(QString exec) {
+    //Start DBus
+    QProcess* dbusLaunch = new QProcess;
+    dbusLaunch->start("dbus-launch");
+    dbusLaunch->waitForFinished();
+    for (QString env : QString(dbusLaunch->readAll()).split("\n")) {
+        pam_putenv(pamHandle, env.toLocal8Bit().data());
     }
+
+    //Start Pulse
+    QProcess::startDetached("pulseaudio");
+
+    //Start the new process
+    /*
+    QStringList execParts = exec.split(" ");
+    char* argv[execParts.count() + 1];
+    for (int i = 0; i < execParts.count(); i++) {
+        argv[i] = (char*) malloc(execParts.at(i).toLocal8Bit().length());
+        strcpy(argv[i], execParts.at(i).toLocal8Bit().constData());
+        //argv[i] = execParts.at(i).toLocal8Bit().data();
+        qDebug() << argv[i];
+    }
+    argv[execParts.count()] = nullptr;
+
+    execvpe(argv[0], argv, pam_getenvlist(pamHandle));
+    qDebug() << "execl failed." << strerror(errno);
+    qDebug() << "Exiting now.";
+
+    QApplication::exit();
+    return false;*/
+
+    QProcessEnvironment env;
+    char** envList = pam_getenvlist(pamHandle);
+    for (int i = 0; envList[i] != nullptr; i++) {
+        QString envvar = envList[i];
+        env.insert(envvar.left(envvar.indexOf("=")), envvar.mid(envvar.indexOf("=") + 1));
+    }
+    free(envList);
+
+    QProcess newProc;
+    newProc.setProcessEnvironment(env);
+    newProc.start(exec);
+    newProc.waitForFinished(-1);
+
+    QApplication::exit();
 }
 
 PamInputCallback PamBackend::currentInputCallback() {
