@@ -17,6 +17,14 @@ PamBackend::PamBackend(QString username, QString sessionName, QObject* parent) :
 }
 
 PamBackend::~PamBackend() {
+    if (sessionOpen) {
+        //Tear down the session
+        pam_close_session(this->pamHandle, 0);
+
+        //Kill the session if needed
+        QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
+        sessionInterface.call("Kill");
+    }
     pam_end(this->pamHandle, PAM_SUCCESS);
 }
 
@@ -53,6 +61,8 @@ bool PamBackend::startSession(QString exec) {
         qDebug() << "PAM open session failed:" << retval;
         return false;
     }
+
+    sessionOpen = true;
 
     //Change the UID and GID of this process
     pid_t sid = setsid();

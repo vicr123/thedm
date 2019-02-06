@@ -76,6 +76,7 @@ class PamBackend : public QObject {
         int sessionPid;
 
         bool authenticating = false;
+        bool sessionOpen = false;
 
         PamInputCallback inputCallback;
         PamMessageCallback messageCallback;
