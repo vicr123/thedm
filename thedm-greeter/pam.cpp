@@ -87,8 +87,6 @@ bool PamBackend::startSession(QString exec) {
         for (int i = 0; i < execParts.count(); i++) {
             argv[i] = (char*) malloc(execParts.at(i).toLocal8Bit().length());
             strcpy(argv[i], execParts.at(i).toLocal8Bit().constData());
-            //argv[i] = execParts.at(i).toLocal8Bit().data();
-            qDebug() << argv[i];
         }
         argv[execParts.count()] = nullptr;
 
