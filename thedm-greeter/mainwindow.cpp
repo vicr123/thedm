@@ -168,6 +168,7 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
     pamBackend->putenv("DISPLAY", qgetenv("DISPLAY"));
     pamBackend->putenv("XDG_SESSION_CLASS", "user");
     pamBackend->putenv("XDG_SESSION_TYPE", "x11");
+    pamBackend->putenv("XDG_SEAT", "seat0");
     pamBackend->setItem(PAM_XDISPLAY, qgetenv("DISPLAY"));
     pamBackend->setItem(PAM_TTY, qgetenv("DISPLAY"));
     connect(pamBackend, &PamBackend::inputRequired, [=](bool echo, QString msg, PamInputCallback callback) {
@@ -243,6 +244,18 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
     if (!pamBackend->startSession(sessionExec)) {
         failLoginUser("Session unable to be opened");
     }
+
+    //At this point, the session is running.
+    QApplication::setQuitOnLastWindowClosed(false);
+    this->hide();
+    QApplication::processEvents();
+
+    //Now wait for the session to close
+    pamBackend->waitForSessionEnd();
+
+    //The session has ended; close the PAM session and exit
+    pamBackend->deleteLater();
+    QApplication::exit();
 }
 
 void MainWindow::failLoginUser(QString reason) {
