@@ -58,6 +58,7 @@ class ManagedDisplay : public QObject
         enum DisplayGoneReason {
             SessionExit,
             SwitchSession,
+            GreeterNotSpawned,
             Unknown
         };
 
@@ -70,6 +71,8 @@ class ManagedDisplay : public QObject
 
     private:
         ManagedDisplayPrivate* d;
+
+        void doSpawnGreeter();
 };
 
 #endif // MANAGEDDISPLAY_H

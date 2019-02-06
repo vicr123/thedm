@@ -272,7 +272,7 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
 
         //The session has ended; close the PAM session and exit
         pamBackend->deleteLater();
-        QApplication::exit();
+        QApplication::exit(0);
     });
 
     tVariantAnimation* palAnim = new tVariantAnimation();

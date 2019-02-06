@@ -33,6 +33,8 @@ struct ManagedDisplayPrivate {
     QProcess* greeterProcess = nullptr;
 
     ManagedDisplay::DisplayGoneReason reason = ManagedDisplay::SessionExit;
+    int spawnRetryCount = 0;
+    int vt;
 };
 
 ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(parent)
@@ -93,9 +95,21 @@ ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(
         }
     }
 
-    //qputenv("QT_QPA_PLATFORMTHEME", "ts");
-    //qputenv("QT_IM_MODULE", "ts-kbd");
+    d->vt = vt;
 
+    doSpawnGreeter();
+}
+
+ManagedDisplay::~ManagedDisplay() {
+    if (d->x11Process->state() == QProcess::Running) {
+        d->x11Process->terminate();
+    }
+
+    emit displayGone(d->reason);
+    delete d;
+}
+
+void ManagedDisplay::doSpawnGreeter() {
     //Find the greeter path
     QStringList possibleGreeters = theLibsGlobal::searchInPath("thedm-greeter");
     if (possibleGreeters.count() == 0) {
@@ -110,8 +124,9 @@ ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(
     d->greeterProcess = new QProcess();
     d->greeterProcess->setProcessEnvironment(env);
     d->greeterProcess->setProcessChannelMode(QProcess::ForwardedChannels);
-    d->greeterProcess->start(possibleGreeters.first() + " " + QString::number(vt));
-    connect(d->greeterProcess, QOverload<int>::of(&QProcess::finished), [=](int exitCode) {
+    d->greeterProcess->start(possibleGreeters.first() + " " + QString::number(d->vt));
+    connect(d->greeterProcess, QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished), [=](int exitCode, QProcess::ExitStatus status) {
+        qDebug() << "Greeter exited with exit code" << exitCode;
         switch (exitCode) {
             case 0:
                 d->reason = SessionExit;
@@ -127,16 +142,15 @@ ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(
     });
     connect(d->greeterProcess, QOverload<QProcess::ProcessError>::of(&QProcess::error), [=] {
         qWarning() << "Cannot spawn greeter process.";
+        d->spawnRetryCount++;
+        if (d->spawnRetryCount < 5) {
+            doSpawnGreeter();
+        } else {
+            qWarning() << "Giving up on spawning the greeter. Maybe something is wrong with your configuration.";
+            d->reason = GreeterNotSpawned;
+            this->deleteLater();
+        }
     });
-}
-
-ManagedDisplay::~ManagedDisplay() {
-    if (d->x11Process->state() == QProcess::Running) {
-        d->x11Process->terminate();
-    }
-
-    emit displayGone(d->reason);
-    delete d;
 }
 
 int ManagedDisplay::nextAvailableVt() {
