@@ -43,6 +43,8 @@ int main(int argc, char *argv[])
     backend.putenv("XDG_SESSION_CLASS", "greeter");
     backend.putenv("XDG_SESSION_TYPE", "x11");
     backend.putenv("XDG_SEAT", "seat0");
+    backend.setItem(PAM_XDISPLAY, qgetenv("DISPLAY"));
+    backend.setItem(PAM_TTY, qgetenv("DISPLAY"));
     backend.authenticate();
     backend.acctMgmt();
     backend.setCred();

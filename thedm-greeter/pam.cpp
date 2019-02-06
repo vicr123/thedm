@@ -39,6 +39,10 @@ QString PamBackend::getenv(QString env) {
     return pam_getenv(pamHandle, env.toLocal8Bit().data());
 }
 
+void PamBackend::setItem(int type, const void* value) {
+    pam_set_item(pamHandle, type, value);
+}
+
 bool PamBackend::startSession(QString exec) {
     if (int retval = pam_open_session(this->pamHandle, 0) != PAM_SUCCESS) {
         qDebug() << "PAM open session failed:" << retval;
