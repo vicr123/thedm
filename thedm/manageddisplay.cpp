@@ -90,8 +90,8 @@ ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(
         }
     }
 
-    qputenv("QT_QPA_PLATFORMTHEME", "ts");
-    qputenv("QT_IM_MODULE", "ts-kbd");
+    //qputenv("QT_QPA_PLATFORMTHEME", "ts");
+    //qputenv("QT_IM_MODULE", "ts-kbd");
 
     //Find the greeter path
     QStringList possibleGreeters = theLibsGlobal::searchInPath("thedm-greeter");
@@ -105,12 +105,12 @@ ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(
 
     //Spawn the greeter
     d->greeterProcess = new QProcess();
-    d->greeterProcess->start(possibleGreeters.first());
+    d->greeterProcess->setProcessEnvironment(env);
     d->greeterProcess->setArguments({
         QString::number(vt)
     });
-    d->greeterProcess->setProcessEnvironment(env);
     d->greeterProcess->setProcessChannelMode(QProcess::ForwardedChannels);
+    d->greeterProcess->start(possibleGreeters.first());
     connect(d->greeterProcess, QOverload<int>::of(&QProcess::finished), [=] {
         this->deleteLater();
     });
