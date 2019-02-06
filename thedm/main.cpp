@@ -26,17 +26,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    //Find the current VT
-    QProcess vtProc;
-    vtProc.start("fgconsole");
-    vtProc.waitForFinished();
-
-    bool vtOk;
-    int vt = vtProc.readAll().toInt(&vtOk);
-
-    if (!vtOk) {
-        vt = 1;
-    }
+    int vt = ManagedDisplay::nextAvailableVt();
     ManagedDisplay* d = new ManagedDisplay("seat0", vt);
 
     return a.exec();

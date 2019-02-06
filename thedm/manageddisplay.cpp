@@ -23,6 +23,7 @@
 #include <QSettings>
 #include <QThread>
 #include <QFile>
+#include <QDBusInterface>
 #include <the-libs_global.h>
 
 #include <unistd.h>
@@ -121,4 +122,29 @@ ManagedDisplay::~ManagedDisplay() {
         d->x11Process->terminate();
     }
     delete d;
+}
+
+
+
+int ManagedDisplay::nextAvailableVt() {
+    QDBusInterface logind("org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", QDBusConnection::systemBus());
+    QDBusMessage sessions = logind.call("ListSessions");
+
+    QDBusArgument sessionArg = sessions.arguments().first().value<QDBusArgument>();
+    QList<SessionList> listOfSessions;
+    sessionArg >> listOfSessions;
+
+    QList<int> usedVts;
+    for (SessionList s : listOfSessions) {
+        QDBusInterface session("org.freedesktop.login1", s.sessionPath.path(), "org.freedesktop.login1.Session", QDBusConnection::systemBus());
+
+        if (!usedVts.contains(session.property("VTNr").toInt())) {
+            usedVts.append(session.property("VTNr").toInt());
+        }
+    }
+
+    int currentVt = 1;
+    while (usedVts.contains(currentVt)) currentVt++;
+
+    return currentVt;
 }

@@ -21,6 +21,31 @@
 #define MANAGEDDISPLAY_H
 
 #include <QObject>
+#include <QDBusObjectPath>
+#include <QDBusArgument>
+
+struct SessionList {
+    QString sessionId;
+    uint userId;
+    QString userName;
+    QString seatId;
+    QDBusObjectPath sessionPath;
+};
+Q_DECLARE_METATYPE(SessionList)
+
+inline QDBusArgument &operator<<(QDBusArgument &arg, const SessionList &map) {
+    arg.beginStructure();
+    arg << map.sessionId << map.userId << map.userName << map.seatId << map.sessionPath;
+    arg.endStructure();
+    return arg;
+}
+
+inline const QDBusArgument &operator>>(const QDBusArgument &arg, SessionList &map) {
+    arg.beginStructure();
+    arg >> map.sessionId >> map.userId >> map.userName >> map.seatId >> map.sessionPath;
+    arg.endStructure();
+    return arg;
+}
 
 struct ManagedDisplayPrivate;
 class ManagedDisplay : public QObject
@@ -30,6 +55,7 @@ class ManagedDisplay : public QObject
         explicit ManagedDisplay(QString seat, int vt, QObject *parent = nullptr);
         ~ManagedDisplay();
 
+        static int nextAvailableVt();
     signals:
 
     public slots:
