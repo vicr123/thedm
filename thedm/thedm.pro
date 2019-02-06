@@ -17,10 +17,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-    manageddisplay.cpp
+    manageddisplay.cpp \
+    seatmanager.cpp
 
 HEADERS += \
-    manageddisplay.h
+    manageddisplay.h \
+    seatmanager.h
 
 DISTFILES += \
     thedm.service \

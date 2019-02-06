@@ -17,16 +17,26 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * *************************************/
-#include <QCoreApplication>
+#ifndef DISPLAYMANAGER_H
+#define DISPLAYMANAGER_H
 
-#include "seatmanager.h"
-#include <QProcess>
+#include <QObject>
 
-int main(int argc, char *argv[])
+struct SeatManagerPrivate;
+class SeatManager : public QObject
 {
-    QCoreApplication a(argc, argv);
+        Q_OBJECT
+    public:
+        explicit SeatManager(QString seat, QObject *parent = nullptr);
+        ~SeatManager();
 
-    SeatManager* s = new SeatManager("seat0");
+    signals:
 
-    return a.exec();
-}
+    public slots:
+        void spawnGreeter();
+
+    private:
+        SeatManagerPrivate* d;
+};
+
+#endif // DISPLAYMANAGER_H

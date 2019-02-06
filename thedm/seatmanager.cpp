@@ -17,16 +17,36 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * *************************************/
-#include <QCoreApplication>
-
 #include "seatmanager.h"
-#include <QProcess>
+#include "manageddisplay.h"
 
-int main(int argc, char *argv[])
+struct SeatManagerPrivate {
+    QString seat;
+    QList<ManagedDisplay*> dpys;
+};
+
+SeatManager::SeatManager(QString seat, QObject *parent) : QObject(parent)
 {
-    QCoreApplication a(argc, argv);
+    d = new SeatManagerPrivate();
 
-    SeatManager* s = new SeatManager("seat0");
+    d->seat = seat;
+    spawnGreeter();
+}
 
-    return a.exec();
+void SeatManager::spawnGreeter() {
+    int vt = ManagedDisplay::nextAvailableVt();
+    ManagedDisplay* dpy = new ManagedDisplay(d->seat, vt);
+    connect(dpy, &ManagedDisplay::displayGone, [=](ManagedDisplay::DisplayGoneReason reason) {
+        d->dpys.removeOne(dpy);
+
+        if (reason == ManagedDisplay::SessionExit) {
+            //Spawn a new greeter
+            spawnGreeter();
+        }
+    });
+    d->dpys.append(dpy);
+}
+
+SeatManager::~SeatManager() {
+    delete d;
 }

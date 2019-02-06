@@ -55,8 +55,16 @@ class ManagedDisplay : public QObject
         explicit ManagedDisplay(QString seat, int vt, QObject *parent = nullptr);
         ~ManagedDisplay();
 
+        enum DisplayGoneReason {
+            SessionExit,
+            SwitchSession,
+            Unknown
+        };
+
         static int nextAvailableVt();
+
     signals:
+        void displayGone(DisplayGoneReason reason);
 
     public slots:
 

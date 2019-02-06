@@ -820,7 +820,7 @@ void MainWindow::on_loginStack_currentChanged(int arg1)
 
 void MainWindow::on_powerButton_clicked()
 {
-    this->close();
+    QApplication::exit(1);
 }
 
 void MainWindow::on_goBackUserSelect_clicked()

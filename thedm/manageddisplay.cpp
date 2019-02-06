@@ -31,6 +31,8 @@
 struct ManagedDisplayPrivate {
     QProcess* x11Process = nullptr;
     QProcess* greeterProcess = nullptr;
+
+    ManagedDisplay::DisplayGoneReason reason = ManagedDisplay::SessionExit;
 };
 
 ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(parent)
@@ -109,7 +111,18 @@ ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(
     d->greeterProcess->setProcessEnvironment(env);
     d->greeterProcess->setProcessChannelMode(QProcess::ForwardedChannels);
     d->greeterProcess->start(possibleGreeters.first() + " " + QString::number(vt));
-    connect(d->greeterProcess, QOverload<int>::of(&QProcess::finished), [=] {
+    connect(d->greeterProcess, QOverload<int>::of(&QProcess::finished), [=](int exitCode) {
+        switch (exitCode) {
+            case 0:
+                d->reason = SessionExit;
+                break;
+            case 1:
+                d->reason = SwitchSession;
+                break;
+            default:
+                d->reason = Unknown;
+                break;
+        }
         this->deleteLater();
     });
     connect(d->greeterProcess, QOverload<QProcess::ProcessError>::of(&QProcess::error), [=] {
@@ -121,10 +134,10 @@ ManagedDisplay::~ManagedDisplay() {
     if (d->x11Process->state() == QProcess::Running) {
         d->x11Process->terminate();
     }
+
+    emit displayGone(d->reason);
     delete d;
 }
-
-
 
 int ManagedDisplay::nextAvailableVt() {
     QDBusInterface logind("org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", QDBusConnection::systemBus());
