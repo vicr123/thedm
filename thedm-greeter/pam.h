@@ -69,7 +69,7 @@ class PamBackend : public QObject {
         static int conversation(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr);
         pam_handle_t* pamHandle;
         struct passwd *pw;
-        QString username, password;
+        QString username;
 
         PamInputCallback inputCallback;
         PamMessageCallback messageCallback;

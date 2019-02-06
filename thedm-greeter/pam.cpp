@@ -20,7 +20,6 @@ PamBackend::~PamBackend() {
 }
 
 bool PamBackend::authenticate() {
-    this->password = password;
     return pam_authenticate(this->pamHandle, 0) == PAM_SUCCESS;
 }
 
@@ -41,7 +40,8 @@ QString PamBackend::getenv(QString env) {
 }
 
 bool PamBackend::startSession(QString exec) {
-    if (pam_open_session(this->pamHandle, 0) != PAM_SUCCESS) {
+    if (int retval = pam_open_session(this->pamHandle, 0) != PAM_SUCCESS) {
+        qDebug() << "PAM open session failed:" << retval;
         return false;
     }
 

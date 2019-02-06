@@ -162,11 +162,11 @@ MainWindow::~MainWindow()
 void MainWindow::attemptLoginUser(QString username, QString displayName, QString homeDir) {
     this->setEnabled(false);
 
-    pamBackend = new PamBackend(username);
+    pamBackend = new PamBackend(username, "sddm");
     pamBackend->putenv("DISPLAY", qgetenv("DISPLAY"));
     pamBackend->putenv("XDG_SESSION_CLASS", "user");
     pamBackend->putenv("XDG_SESSION_TYPE", "x11");
-    //pamBackend->putenv("XDG_VTNR", vtnr);
+    pamBackend->putenv("XDG_SEAT", "seat0");
     connect(pamBackend, &PamBackend::inputRequired, [=](bool echo, QString msg, PamInputCallback callback) {
         qDebug() << "Echo: " << echo;
         qDebug() << "Message: " << msg;
