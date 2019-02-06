@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    /*QCommandLineParser parser;
+    QCommandLineParser parser;
     parser.addPositionalArgument("vt", "The VT to display on");
 
     parser.process(a);
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     if (!vtIntOk) {
         //TODO: Yell error
         return 1;
-    }*/
+    }
 
     /*PamBackend backend("root", "sddm-greeter");
     backend.putenv("DISPLAY", qgetenv("DISPLAY"));
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 
     qDebug() << backend.getenv("XDG_RUNTIME_DIR");*/
 
-    MainWindow w("1");
+    MainWindow w(vtString);
     w.showFullScreen();
 
     return a.exec();
