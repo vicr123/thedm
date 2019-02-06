@@ -72,6 +72,8 @@ class PamBackend : public QObject {
         struct passwd *pw;
         QString username;
 
+        bool authenticating = false;
+
         PamInputCallback inputCallback;
         PamMessageCallback messageCallback;
 };

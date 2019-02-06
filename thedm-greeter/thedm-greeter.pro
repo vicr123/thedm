@@ -34,15 +34,18 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     pam.cpp \
-    underlineanimation.cpp
+    underlineanimation.cpp \
+    pamquestion.cpp
 
 HEADERS += \
     mainwindow.h \
     pam.h \
-    underlineanimation.h
+    underlineanimation.h \
+    pamquestion.h
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    pamquestion.ui
 
 unix {
     target.path = /usr/bin/

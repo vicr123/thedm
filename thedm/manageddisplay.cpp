@@ -57,7 +57,8 @@ ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(
             ":" + QString::number(display),
             "vt" + QString::number(vt),
             "-dpi", dpi,
-            "-displayfd", QString::number(pipeFds[1])
+            "-displayfd", QString::number(pipeFds[1]),
+            "-seat", seat
         });
         d->x11Process->waitForFinished(1000);
 

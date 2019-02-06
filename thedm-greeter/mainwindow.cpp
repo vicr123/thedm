@@ -34,8 +34,10 @@
 #include <QDir>
 #include <QSysInfo>
 #include <QMessageBox>
+#include "pamquestion.h"
 #include <tvirtualkeyboard.h>
 #include <ttoast.h>
+#include <tpopover.h>
 #include "pam.h"
 
 #include <grp.h>
@@ -169,9 +171,6 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
     pamBackend->setItem(PAM_XDISPLAY, qgetenv("DISPLAY"));
     pamBackend->setItem(PAM_TTY, qgetenv("DISPLAY"));
     connect(pamBackend, &PamBackend::inputRequired, [=](bool echo, QString msg, PamInputCallback callback) {
-        qDebug() << "Echo: " << echo;
-        qDebug() << "Message: " << msg;
-
         if (msg == "Password: ") {
             ui->usernameLabel->setText(tr("Hi %1!").arg(displayName));
             ui->pagesStack->setCurrentIndex(1);
@@ -190,7 +189,28 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
                 tVirtualKeyboard::instance()->showKeyboard();
             });
         } else {
+            PamQuestion* q = new PamQuestion(echo, msg);
+            tPopover* p = new tPopover(q);
+            p->setPopoverWidth(400 * theLibsGlobal::getDPIScaling());
+            bool* responded = new bool(false);
 
+            connect(q, &PamQuestion::dismiss, [=] {
+                p->dismiss();
+            });
+            connect(q, &PamQuestion::respond, [=](QString response) {
+                *responded = true;
+                callback(response, false);
+            });
+            connect(p, &tPopover::dismissed, [=] {
+                if (!*responded) {
+                    callback("", true);
+                }
+                delete responded;
+                p->deleteLater();
+                q->deleteLater();
+            });
+
+            p->show(this);
         }
         this->setEnabled(true);
     });

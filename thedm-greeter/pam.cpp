@@ -20,7 +20,11 @@ PamBackend::~PamBackend() {
 }
 
 bool PamBackend::authenticate() {
-    return pam_authenticate(this->pamHandle, 0) == PAM_SUCCESS;
+    authenticating = true;
+    int retval = pam_authenticate(this->pamHandle, 0);
+
+    authenticating = false;
+    return retval == PAM_SUCCESS;
 }
 
 bool PamBackend::acctMgmt() {
@@ -110,13 +114,19 @@ PamMessageCallback PamBackend::currentMessageCallback() {
 }
 
 int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr) {
+    PamBackend* backend = (PamBackend*) appdata_ptr;
+
+    //Make sure authentication hasn't been cancelled
+    if (!backend->authenticating) {
+        //Authentication has been cancelled
+        return PAM_CONV_ERR;
+    }
+
     //Check for memory buffer errors
     *resp = (pam_response*) calloc(num_msg, sizeof(struct pam_response));
     if (*resp == nullptr) {
         return PAM_BUF_ERR;
     }
-
-    PamBackend* backend = (PamBackend*) appdata_ptr;
 
     QEventLoop* loop = new QEventLoop();
     int result = PAM_SUCCESS;
@@ -153,6 +163,7 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
 
         if (loop->exec() != 0) {
             result = PAM_CONV_ERR;
+            break;
         }
 
         if (result != PAM_SUCCESS) {
@@ -165,6 +176,8 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
         //If there was an issue, free memory pointers
         free(*resp);
         *resp = nullptr;
+
+        backend->authenticating = false;
     }
 
     return result;
