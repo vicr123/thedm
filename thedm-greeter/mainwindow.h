@@ -45,8 +45,6 @@ class MainWindow : public QMainWindow
 
         void showFullScreen();
 
-        void animateClose();
-
     private slots:
         void tick();
 

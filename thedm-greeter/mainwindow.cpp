@@ -248,15 +248,48 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
 
     //At this point, the session is running.
     QApplication::setQuitOnLastWindowClosed(false);
-    this->hide();
-    QApplication::processEvents();
 
-    //Now wait for the session to close
-    pamBackend->waitForSessionEnd();
+    //Animate away
+    tPropertyAnimation* passUp = new tPropertyAnimation(ui->passwordFrame, "geometry");
+    passUp->setStartValue(ui->passwordFrame->geometry());
+    passUp->setEndValue(QRect(0, -200, this->width(), this->height()));
+    passUp->setDuration(250);
+    passUp->setEasingCurve(QEasingCurve::InCubic);
+    connect(passUp, SIGNAL(finished()), passUp, SLOT(deleteLater()));
 
-    //The session has ended; close the PAM session and exit
-    pamBackend->deleteLater();
-    QApplication::exit();
+    tPropertyAnimation* opacity = new tPropertyAnimation(passwordFrameOpacity, "opacity");
+    opacity->setStartValue((float) 1);
+    opacity->setEndValue((float) 0);
+    opacity->setDuration(250);
+    opacity->setEasingCurve(QEasingCurve::InCubic);
+    connect(opacity, SIGNAL(finished()), opacity, SLOT(deleteLater()));
+    connect(opacity, &tPropertyAnimation::finished, [=] {
+        this->hide();
+        QApplication::processEvents();
+
+        //Now wait for the session to close
+        pamBackend->waitForSessionEnd();
+
+        //The session has ended; close the PAM session and exit
+        pamBackend->deleteLater();
+        QApplication::exit();
+    });
+
+    tVariantAnimation* palAnim = new tVariantAnimation();
+    palAnim->setStartValue(this->palette().color(QPalette::Window));
+    palAnim->setEndValue(QColor(0, 0, 0));
+    palAnim->setDuration(250);
+    palAnim->setEasingCurve(QEasingCurve::InCubic);
+    connect(palAnim, &tVariantAnimation::valueChanged, [=](QVariant value) {
+        QPalette pal = this->palette();
+        pal.setColor(QPalette::Window, value.value<QColor>());
+        this->setPalette(pal);
+    });
+    connect(palAnim, &tVariantAnimation::finished, palAnim, &tVariantAnimation::deleteLater);
+
+    opacity->start();
+    passUp->start();
+    palAnim->start();
 }
 
 void MainWindow::failLoginUser(QString reason) {
@@ -722,40 +755,6 @@ void MainWindow::on_TurnOffScreenButton_clicked()
 {
     showCover();
     QProcess::startDetached("xset dpms force off");
-}
-
-void MainWindow::animateClose() {
-    tPropertyAnimation* passUp = new tPropertyAnimation(ui->passwordFrame, "geometry");
-    passUp->setStartValue(ui->passwordFrame->geometry());
-    passUp->setEndValue(QRect(0, -200, this->width(), this->height()));
-    passUp->setDuration(250);
-    passUp->setEasingCurve(QEasingCurve::InCubic);
-    connect(passUp, SIGNAL(finished()), passUp, SLOT(deleteLater()));
-
-    tPropertyAnimation* opacity = new tPropertyAnimation(passwordFrameOpacity, "opacity");
-    opacity->setStartValue((float) 1);
-    opacity->setEndValue((float) 0);
-    opacity->setDuration(250);
-    opacity->setEasingCurve(QEasingCurve::InCubic);
-    connect(opacity, SIGNAL(finished()), opacity, SLOT(deleteLater()));
-    connect(opacity, &tPropertyAnimation::finished, [=] {
-        tVariantAnimation* anim = new tVariantAnimation();
-        anim->setStartValue((float) 1);
-        anim->setEndValue((float) 0);
-        anim->setDuration(250);
-        anim->setEasingCurve(QEasingCurve::InCubic);
-        connect(anim, &tVariantAnimation::valueChanged, [=](QVariant value) {
-            this->setWindowOpacity(value.toFloat());
-        });
-        connect(anim, SIGNAL(finished()), anim, SLOT(deleteLater()));
-        connect(anim, &tVariantAnimation::finished, [=] {
-            this->close();
-        });
-
-        anim->start();
-    });
-    opacity->start();
-    passUp->start();
 }
 
 void MainWindow::on_SuspendButton_clicked()
