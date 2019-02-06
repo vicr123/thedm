@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
         return 1;
     }*/
 
-    PamBackend backend("root", "sddm-greeter");
+    /*PamBackend backend("root", "sddm-greeter");
     backend.putenv("DISPLAY", qgetenv("DISPLAY"));
     backend.putenv("XDG_SESSION_CLASS", "greeter");
     backend.putenv("XDG_SESSION_TYPE", "x11");
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     backend.setCred();
     backend.startSession("");
 
-    qDebug() << backend.getenv("XDG_RUNTIME_DIR");
+    qDebug() << backend.getenv("XDG_RUNTIME_DIR");*/
 
     MainWindow w("1");
     w.showFullScreen();
