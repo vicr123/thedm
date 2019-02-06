@@ -57,8 +57,7 @@ ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(
         pipe(pipeFds);
 
         d->x11Process = new QProcess();
-        //d->x11Process->start("/usr/bin/X :" + QString::number(display) + " vt" + QString::number(vt) + " -dpi " + dpi);
-        d->x11Process->start("/usr/bin/X", {
+        d->x11Process->start("/usr/bin/Xorg", {
             ":" + QString::number(display),
             "vt" + QString::number(vt),
             "-dpi", dpi,
@@ -102,7 +101,7 @@ ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(
 
 ManagedDisplay::~ManagedDisplay() {
     if (d->x11Process->state() == QProcess::Running) {
-        d->x11Process->kill();
+        d->x11Process->terminate();
     }
 
     emit displayGone(d->reason);
