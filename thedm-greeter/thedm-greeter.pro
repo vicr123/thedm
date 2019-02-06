@@ -11,7 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 unix {
     CONFIG += link_pkgconfig
-    PKGCONFIG += x11 xcb
+    PKGCONFIG += x11 xcb xext
 }
 
 TARGET = thedm-greeter
@@ -35,17 +35,20 @@ SOURCES += \
     mainwindow.cpp \
     pam.cpp \
     underlineanimation.cpp \
-    pamquestion.cpp
+    pamquestion.cpp \
+    poweroptions.cpp
 
 HEADERS += \
     mainwindow.h \
     pam.h \
     underlineanimation.h \
-    pamquestion.h
+    pamquestion.h \
+    poweroptions.h
 
 FORMS += \
         mainwindow.ui \
-    pamquestion.ui
+    pamquestion.ui \
+    poweroptions.ui
 
 unix {
     target.path = /usr/bin/

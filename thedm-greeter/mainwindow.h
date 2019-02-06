@@ -58,10 +58,6 @@ class MainWindow : public QMainWindow
 
         void on_password_returnPressed();
 
-        void on_TurnOffScreenButton_clicked();
-
-        void on_SuspendButton_clicked();
-
         void on_passwordButton_toggled(bool checked);
 
         void on_mousePasswordButton_toggled(bool checked);

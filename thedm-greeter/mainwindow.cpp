@@ -35,6 +35,7 @@
 #include <QSysInfo>
 #include <QMessageBox>
 #include "pamquestion.h"
+#include "poweroptions.h"
 #include <tvirtualkeyboard.h>
 #include <ttoast.h>
 #include <tpopover.h>
@@ -756,23 +757,6 @@ void MainWindow::on_password_returnPressed()
     ui->unlockButton->click();
 }
 
-void MainWindow::on_TurnOffScreenButton_clicked()
-{
-    showCover();
-    QProcess::startDetached("xset dpms force off");
-}
-
-void MainWindow::on_SuspendButton_clicked()
-{
-    showCover();
-    QList<QVariant> arguments;
-    arguments.append(true);
-
-    QDBusMessage message = QDBusMessage::createMethodCall("org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "Suspend");
-    message.setArguments(arguments);
-    QDBusConnection::systemBus().send(message);
-}
-
 struct LoginSession {
     QString sessionId;
     uint userId;
@@ -825,7 +809,23 @@ void MainWindow::on_loginStack_currentChanged(int arg1)
 
 void MainWindow::on_powerButton_clicked()
 {
-    QApplication::exit(1);
+    PowerOptions* power = new PowerOptions();
+
+    tPopover* p = new tPopover(power);
+    p->setPopoverWidth(400 * theLibsGlobal::getDPIScaling());
+
+    connect(power, &PowerOptions::dismiss, [=] {
+        p->dismiss();
+    });
+    connect(power, &PowerOptions::showCover, [=] {
+        showCover();
+    });
+    connect(p, &tPopover::dismissed, [=] {
+        p->deleteLater();
+        power->deleteLater();
+    });
+
+    p->show(this);
 }
 
 void MainWindow::on_goBackUserSelect_clicked()
