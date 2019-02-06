@@ -49,7 +49,8 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset theme="go-previous"/>
+        <iconset theme="go-previous">
+         <normaloff>.</normaloff>.</iconset>
        </property>
        <property name="flat">
         <bool>true</bool>
@@ -57,7 +58,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="titleLabel">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -70,7 +71,7 @@
         </font>
        </property>
        <property name="text">
-        <string>PAM</string>
+        <string notr="true">PAM</string>
        </property>
        <property name="margin">
         <number>9</number>
@@ -92,7 +93,8 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset theme="dialog-ok"/>
+        <iconset theme="dialog-ok">
+         <normaloff>.</normaloff>.</iconset>
        </property>
        <property name="flat">
         <bool>true</bool>
@@ -138,7 +140,7 @@
      <item>
       <widget class="QLineEdit" name="responseBox">
        <property name="placeholderText">
-        <string>Response</string>
+        <string notr="true">Response</string>
        </property>
       </widget>
      </item>

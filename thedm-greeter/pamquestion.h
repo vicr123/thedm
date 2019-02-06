@@ -34,6 +34,9 @@ class PamQuestion : public QWidget
         explicit PamQuestion(bool echo, QString question, QWidget *parent = nullptr);
         ~PamQuestion();
 
+        void setTitle(QString text);
+        void setPlaceholder(QString placeholder);
+
     signals:
         void dismiss();
         void respond(QString response);

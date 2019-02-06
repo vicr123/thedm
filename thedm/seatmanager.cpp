@@ -19,6 +19,7 @@
  * *************************************/
 #include "seatmanager.h"
 #include "manageddisplay.h"
+#include <QDebug>
 
 struct SeatManagerPrivate {
     QString seat;

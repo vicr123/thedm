@@ -74,6 +74,8 @@ class MainWindow : public QMainWindow
 
         void on_sessionSelect_triggered(QAction *arg1);
 
+        void on_someoneElseButton_clicked();
+
     private:
         Ui::MainWindow *ui;
 

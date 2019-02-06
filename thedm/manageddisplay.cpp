@@ -102,7 +102,7 @@ ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(
 
 ManagedDisplay::~ManagedDisplay() {
     if (d->x11Process->state() == QProcess::Running) {
-        d->x11Process->terminate();
+        d->x11Process->kill();
     }
 
     emit displayGone(d->reason);
@@ -148,8 +148,6 @@ void ManagedDisplay::doSpawnGreeter() {
             }
         }
         this->deleteLater();
-    });
-    connect(d->greeterProcess, QOverload<QProcess::ProcessError>::of(&QProcess::error), [=] {
     });
 }
 

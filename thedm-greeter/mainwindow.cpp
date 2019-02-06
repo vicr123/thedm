@@ -192,6 +192,9 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
             });
         } else {
             PamQuestion* q = new PamQuestion(echo, msg);
+            q->setTitle(tr("PAM Challenge"));
+            q->setPlaceholder(tr("Response"));
+
             tPopover* p = new tPopover(q);
             p->setPopoverWidth(400 * theLibsGlobal::getDPIScaling());
             bool* responded = new bool(false);
@@ -225,7 +228,9 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
     if (!pamBackend->authenticate()) {
         failLoginUser(tr("Authentication failed."));
         //Try to log in again
-        attemptLoginUser(username, displayName, homeDir);
+        QTimer::singleShot(0, [=] {
+            attemptLoginUser(username, displayName, homeDir);
+        });
         return;
     }
 
@@ -834,4 +839,50 @@ void MainWindow::on_sessionSelect_triggered(QAction *arg1)
 {
     ui->sessionSelect->setText(arg1->text());
     sessionExec = arg1->data().toString();
+}
+
+void MainWindow::on_someoneElseButton_clicked()
+{
+    PamQuestion* q = new PamQuestion(true, tr("What's the username of the user you'd like to log in as?"));
+    q->setTitle(tr("Log in as other user"));
+    q->setPlaceholder(tr("Username"));
+
+    tPopover* p = new tPopover(q);
+    p->setPopoverWidth(400 * theLibsGlobal::getDPIScaling());
+
+    connect(q, &PamQuestion::dismiss, [=] {
+        p->dismiss();
+    });
+    connect(q, &PamQuestion::respond, [=](QString response) {
+        struct passwd *pw = getpwnam(response.toLocal8Bit().data());
+        if (pw != nullptr) {
+            QString gecosData = pw->pw_gecos;
+            QStringList gecosDataList = gecosData.split(",");
+            QString username = pw->pw_name;
+            QString home = pw->pw_dir;
+            QString displayName;
+
+            if (gecosDataList.count() == 0 || gecosData == "") {
+                displayName = username;
+            } else {
+                displayName = gecosDataList.first();
+            }
+
+            QTimer::singleShot(0, [=] {
+                attemptLoginUser(username, displayName, home);
+            });
+        } else {
+            tToast* toast = new tToast();
+            toast->setTitle(tr("User not found"));
+            toast->setText(tr("Couldn't find that user. Make sure you've spelled the username correctly."));
+            connect(toast, &tToast::dismissed, toast, &tToast::deleteLater);
+            toast->show(this);
+        }
+    });
+    connect(p, &tPopover::dismissed, [=] {
+        p->deleteLater();
+        q->deleteLater();
+    });
+
+    p->show(this);
 }

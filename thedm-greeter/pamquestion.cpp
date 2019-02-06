@@ -49,3 +49,11 @@ void PamQuestion::on_okayButton_clicked()
     emit respond(ui->responseBox->text());
     emit dismiss();
 }
+
+void PamQuestion::setTitle(QString text) {
+    ui->titleLabel->setText(text);
+}
+
+void PamQuestion::setPlaceholder(QString placeholder) {
+    ui->responseBox->setPlaceholderText(placeholder);
+}
