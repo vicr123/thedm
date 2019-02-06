@@ -134,22 +134,22 @@ void ManagedDisplay::doSpawnGreeter() {
             case 1:
                 d->reason = SwitchSession;
                 break;
-            default:
-                d->reason = Unknown;
-                break;
+            default: {
+                qWarning() << "Cannot spawn greeter process.";
+                d->spawnRetryCount++;
+                if (d->spawnRetryCount < 5) {
+                    doSpawnGreeter();
+                } else {
+                    qWarning() << "Giving up on spawning the greeter. Maybe something is wrong with your configuration.";
+                    d->reason = GreeterNotSpawned;
+                    this->deleteLater();
+                }
+                return;
+            }
         }
         this->deleteLater();
     });
     connect(d->greeterProcess, QOverload<QProcess::ProcessError>::of(&QProcess::error), [=] {
-        qWarning() << "Cannot spawn greeter process.";
-        d->spawnRetryCount++;
-        if (d->spawnRetryCount < 5) {
-            doSpawnGreeter();
-        } else {
-            qWarning() << "Giving up on spawning the greeter. Maybe something is wrong with your configuration.";
-            d->reason = GreeterNotSpawned;
-            this->deleteLater();
-        }
     });
 }
 
