@@ -24,6 +24,7 @@
 #include <QDBusInterface>
 #include <QGraphicsOpacityEffect>
 #include <QSettings>
+#include <QTranslator>
 #include "pam.h"
 
 namespace Ui {
@@ -91,12 +92,9 @@ class MainWindow : public QMainWindow
         QList<QDBusInterface*> allDevices;
         QGraphicsOpacityEffect* passwordFrameOpacity;
 
-        QString mousePassword;
-        QByteArray currentMousePassword;
-        int mousePasswordWrongCount = 0;
-
         QString currentLoginUsername;
         QString sessionExec;
+        QTranslator* userTranslator;
 
         QString vtnr;
 

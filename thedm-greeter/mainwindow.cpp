@@ -58,6 +58,9 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
 
     this->vtnr = vtnr;
 
+    userTranslator = new QTranslator();
+    QApplication::installTranslator(userTranslator);
+
     background = settings->value("background", "/usr/share/tsscreenlock/triangles.svg").toString();
     ui->pagesStack->setCurrentAnimation(tStackedWidget::SlideHorizontal);
 
@@ -164,6 +167,19 @@ MainWindow::~MainWindow()
 
 void MainWindow::attemptLoginUser(QString username, QString displayName, QString homeDir) {
     this->setEnabled(false);
+
+    QSettings tsSettings(homeDir + "/.config/theSuite/theShell.conf", QSettings::IniFormat);
+
+    QString localeName = tsSettings.value("locale/language", "en_US").toString();
+    QLocale userLocale(localeName);
+    QLocale::setDefault(userLocale);
+
+    if (userLocale.name() == "C") {
+        userTranslator->load(localeName, QString(SHAREDIR) + "translations");
+    } else {
+        userTranslator->load(userLocale.name(), QString(SHAREDIR) + "translations");
+    }
+    ui->retranslateUi(this);
 
     pamBackend = new PamBackend(username);
     pamBackend->putenv("DISPLAY", qgetenv("DISPLAY"));

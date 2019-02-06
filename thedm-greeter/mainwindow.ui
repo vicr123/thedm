@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string notr="true">MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -82,7 +82,7 @@
            <item>
             <widget class="QLabel" name="hostnameLabel">
              <property name="text">
-              <string>theShell</string>
+              <string notr="true">Hostname</string>
              </property>
              <property name="margin">
               <number>3</number>
@@ -392,7 +392,7 @@
            <item>
             <widget class="QLabel" name="hostnameLabel_2">
              <property name="text">
-              <string>theShell</string>
+              <string notr="true">Hostname</string>
              </property>
              <property name="margin">
               <number>3</number>
@@ -634,7 +634,7 @@
                       <item>
                        <widget class="QToolButton" name="sessionSelect">
                         <property name="text">
-                         <string>Session</string>
+                         <string notr="true">Session</string>
                         </property>
                         <property name="popupMode">
                          <enum>QToolButton::InstantPopup</enum>
@@ -1154,7 +1154,7 @@
           <item>
            <widget class="QLabel" name="unlockPromptExplanation">
             <property name="text">
-             <string notr="true">Start a new session or resume a paused session</string>
+             <string>Start a new session or resume a paused session</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
