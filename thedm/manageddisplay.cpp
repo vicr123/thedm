@@ -106,11 +106,8 @@ ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(
     //Spawn the greeter
     d->greeterProcess = new QProcess();
     d->greeterProcess->setProcessEnvironment(env);
-    d->greeterProcess->setArguments({
-        QString::number(vt)
-    });
     d->greeterProcess->setProcessChannelMode(QProcess::ForwardedChannels);
-    d->greeterProcess->start(possibleGreeters.first());
+    d->greeterProcess->start(possibleGreeters.first() + " " + QString::number(vt));
     connect(d->greeterProcess, QOverload<int>::of(&QProcess::finished), [=] {
         this->deleteLater();
     });
