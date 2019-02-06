@@ -22,7 +22,10 @@
 #include <QDebug>
 #include <QSettings>
 #include <QThread>
+#include <QFile>
 #include <the-libs_global.h>
+
+#include <unistd.h>
 
 struct ManagedDisplayPrivate {
     QProcess* x11Process = nullptr;
@@ -44,15 +47,45 @@ ManagedDisplay::ManagedDisplay(QString seat, int vt, QObject *parent) : QObject(
             d->x11Process->deleteLater();
         }
 
+        //Create a pipe for talking to the X server and getting the display number
+        int pipeFds[2];
+        pipe(pipeFds);
+
         d->x11Process = new QProcess();
-        d->x11Process->start("/usr/bin/X :" + QString::number(display) + " vt" + QString::number(vt) + " -dpi " + dpi);
+        //d->x11Process->start("/usr/bin/X :" + QString::number(display) + " vt" + QString::number(vt) + " -dpi " + dpi);
+        d->x11Process->start("/usr/bin/X", {
+            ":" + QString::number(display),
+            "vt" + QString::number(vt),
+            "-dpi", dpi,
+            "-displayfd", QString::number(pipeFds[1])
+        });
         d->x11Process->waitForFinished(1000);
 
         if (d->x11Process->state() != QProcess::Running) {
+            //Close the pipe
+            close(pipeFds[0]);
             display++;
         } else {
+            //Close the unneeded pipe
+            close(pipeFds[1]);
+
+            QFile displayPipe;
+            displayPipe.open(pipeFds[0], QFile::ReadOnly);
+
+            QByteArray displayNumber = displayPipe.readLine();
+            if (displayNumber.size() < 2) {
+                //Couldn't read display number
+                close(pipeFds[0]);
+                display++;
+                continue;
+            }
+
+            display = displayNumber.trimmed().toInt();
+
             qputenv("DISPLAY", QString(":" + QString::number(display)).toUtf8());
             serverStarted = true;
+
+            close(pipeFds[0]);
         }
     }
 
