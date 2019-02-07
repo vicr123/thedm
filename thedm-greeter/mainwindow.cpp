@@ -85,7 +85,7 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
     ui->hostnameLabel->setText(QSysInfo::machineHostName());
     ui->hostnameLabel_2->setText(QSysInfo::machineHostName());
 
-    pulse.start("pulseaudio");
+    //pulse.start("pulseaudio");
 
     //Load users
     for (int i = settings->value("users/uidMin", 1000).toInt(); i < settings->value("users/uidMax", 10000).toInt(); i++) {
