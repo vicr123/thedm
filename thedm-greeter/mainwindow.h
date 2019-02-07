@@ -31,6 +31,8 @@ namespace Ui {
     class MainWindow;
 }
 
+class tPopover;
+
 class MainWindow : public QMainWindow
 {
         Q_OBJECT
@@ -101,6 +103,7 @@ class MainWindow : public QMainWindow
         QSettings* settings;
 
         PamBackend* pamBackend;
+        tPopover* currentInfoMessage = nullptr;
 
         void attemptLoginUser(QString username, QString displayName, QString homeDir);
         void failLoginUser(QString reason);

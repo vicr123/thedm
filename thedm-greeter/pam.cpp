@@ -143,10 +143,6 @@ PamInputCallback PamBackend::currentInputCallback() {
     return this->inputCallback;
 }
 
-PamMessageCallback PamBackend::currentMessageCallback() {
-    return this->messageCallback;
-}
-
 int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr) {
     PamBackend* backend = (PamBackend*) appdata_ptr;
 
@@ -185,13 +181,7 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
             case PAM_ERROR_MSG:
                 result = PAM_CONV_ERR;
             case PAM_TEXT_INFO:
-                PamMessageCallback callback = [=] {
-                    loop->quit();
-                };
-
-                backend->messageCallback = callback;
-
-                emit backend->message(msg[i]->msg, callback);
+                emit backend->message(msg[i]->msg);
                 break;
         }
 

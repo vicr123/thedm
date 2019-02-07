@@ -41,7 +41,6 @@ inline const QDBusArgument &operator>>(const QDBusArgument &arg, QStringDBusObje
 }
 
 typedef std::function<void(QString,bool)> PamInputCallback;
-typedef std::function<void()> PamMessageCallback;
 
 class PamBackend : public QObject {
     Q_OBJECT
@@ -51,7 +50,6 @@ class PamBackend : public QObject {
         ~PamBackend();
 
         PamInputCallback currentInputCallback();
-        PamMessageCallback currentMessageCallback();
 
     public slots:
         bool authenticate();
@@ -65,7 +63,7 @@ class PamBackend : public QObject {
 
     signals:
         void inputRequired(bool echo, QString msg, PamInputCallback callback);
-        void message(QString warning, PamMessageCallback callback);
+        void message(QString warning);
 
     private:
         static int conversation(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr);
@@ -79,7 +77,6 @@ class PamBackend : public QObject {
         bool sessionOpen = false;
 
         PamInputCallback inputCallback;
-        PamMessageCallback messageCallback;
 };
 
 #endif // PAM_H

@@ -36,6 +36,7 @@ class PamQuestion : public QWidget
 
         void setTitle(QString text);
         void setPlaceholder(QString placeholder);
+        void setResponseRequired(bool responseRequired);
 
     signals:
         void dismiss();

@@ -57,3 +57,7 @@ void PamQuestion::setTitle(QString text) {
 void PamQuestion::setPlaceholder(QString placeholder) {
     ui->responseBox->setPlaceholderText(placeholder);
 }
+
+void PamQuestion::setResponseRequired(bool responseRequired) {
+    ui->responseBox->setVisible(responseRequired);
+}

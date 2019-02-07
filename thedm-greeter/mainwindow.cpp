@@ -190,6 +190,12 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
     pamBackend->setItem(PAM_XDISPLAY, qgetenv("DISPLAY"));
     pamBackend->setItem(PAM_TTY, qgetenv("DISPLAY"));
     connect(pamBackend, &PamBackend::inputRequired, [=](bool echo, QString msg, PamInputCallback callback) {
+        //Dismiss the info message if it's showing
+        if (this->currentInfoMessage != nullptr) {
+            this->currentInfoMessage->dismiss();
+            this->currentInfoMessage = nullptr;
+        }
+
         if (msg == "Password: ") {
             ui->usernameLabel->setText(tr("Hi %1!").arg(displayName));
             ui->pagesStack->setCurrentIndex(1);
@@ -236,10 +242,34 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
         }
         this->setEnabled(true);
     });
-    connect(pamBackend, &PamBackend::message, [=](QString warning, PamMessageCallback callback) {
-        QMessageBox::warning(this, "Warning", warning);
-        callback();
-        //qWarning() << "WARNING: " << warning;
+    connect(pamBackend, &PamBackend::message, [=](QString warning) {
+        //Dismiss the info message if it's showing
+        if (this->currentInfoMessage != nullptr) {
+            this->currentInfoMessage->dismiss();
+            this->currentInfoMessage = nullptr;
+        }
+
+        PamQuestion* q = new PamQuestion(true, warning);
+        q->setTitle(tr("PAM Message"));
+        q->setResponseRequired(false);
+
+        tPopover* p = new tPopover(q);
+        p->setPopoverWidth(400 * theLibsGlobal::getDPIScaling());
+
+        connect(q, &PamQuestion::dismiss, [=] {
+            p->dismiss();
+        });
+        connect(p, &tPopover::dismissed, [=] {
+            p->deleteLater();
+            q->deleteLater();
+
+            if (this->currentInfoMessage == p) {
+                this->currentInfoMessage = nullptr;
+            }
+        });
+
+        p->show(this);
+        this->currentInfoMessage = p;
     });
 
     if (!pamBackend->authenticate()) {
@@ -249,6 +279,12 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
             attemptLoginUser(username, displayName, homeDir);
         });
         return;
+    }
+
+    //Dismiss the info message if it's showing
+    if (this->currentInfoMessage != nullptr) {
+        this->currentInfoMessage->dismiss();
+        this->currentInfoMessage = nullptr;
     }
 
     //TODO: Check to see if a password was not input and pause the PAM transaction here if so
@@ -315,6 +351,12 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
 }
 
 void MainWindow::failLoginUser(QString reason) {
+    //Dismiss the info message if it's showing
+    if (this->currentInfoMessage != nullptr) {
+        this->currentInfoMessage->dismiss();
+        this->currentInfoMessage = nullptr;
+    }
+
     tToast* toast = new tToast();
     toast->setTitle(tr("Couldn't log in"));
     toast->setText(reason);
