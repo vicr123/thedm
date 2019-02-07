@@ -35,6 +35,7 @@
 #include <QSysInfo>
 #include <QMessageBox>
 #include "pamquestion.h"
+#include "pamchauthtok.h"
 #include "poweroptions.h"
 #include <tvirtualkeyboard.h>
 #include <ttoast.h>
@@ -274,11 +275,44 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
 
             if (this->currentInfoMessage == p) {
                 this->currentInfoMessage = nullptr;
+                this->setEnabled(false);
             }
         });
 
         p->show(this);
         this->currentInfoMessage = p;
+        this->setEnabled(true);
+    });
+    connect(pamBackend, &PamBackend::passwordChangeRequired, [=](bool needOldPassword, PamAuthTokCallback callback) {
+        //Dismiss the info message if it's showing
+        if (this->currentInfoMessage != nullptr) {
+            this->currentInfoMessage->dismiss();
+            this->currentInfoMessage = nullptr;
+        }
+
+        PamChauthtok* q = new PamChauthtok(needOldPassword);
+
+        tPopover* p = new tPopover(q);
+        p->setPopoverWidth(400 * theLibsGlobal::getDPIScaling());
+        bool* responded = new bool(false);
+
+        connect(q, &PamChauthtok::dismiss, [=] {
+            p->dismiss();
+        });
+        connect(q, &PamChauthtok::respond, [=](QString current, QString newPasswordInput, QString confirmPasswordInput) {
+            *responded = true;
+            callback(current, newPasswordInput, confirmPasswordInput, false);
+        });
+        connect(p, &tPopover::dismissed, [=] {
+            if (!*responded) {
+                callback("", "", "", true);
+            }
+            delete responded;
+            p->deleteLater();
+            q->deleteLater();
+        });
+
+        p->show(this);
     });
 
     PamBackend::PamAuthenticationResult authResult = pamBackend->authenticate();
@@ -288,14 +322,14 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
         this->currentInfoMessage = nullptr;
     }
 
-    if (authResult == PamBackend::Failure) {
+    if (authResult == PamBackend::AuthFailure) {
         failLoginUser(tr("Authentication failed."));
         //Try to log in again
         QTimer::singleShot(0, [=] {
             attemptLoginUser(username, displayName, homeDir);
         });
         return;
-    } else if (authResult == PamBackend::Cancelled) {
+    } else if (authResult == PamBackend::AuthCancelled) {
         //Go back to the main screen
         ui->pagesStack->setCurrentIndex(0);
         return;
@@ -305,17 +339,28 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
 
 
     pamBackend->putenv("XDG_SESSION_DESKTOP", "theShell");
-    if (!pamBackend->acctMgmt()) {
-        failLoginUser("PAM Account Management failed");
+
+    PamBackend::PamAccountMgmtResult accMgmtResult = pamBackend->acctMgmt();
+    if (accMgmtResult == PamBackend::AccMgmtFailure) {
+        failLoginUser(tr("PAM Account Management failed"));
         return;
+    } else if (accMgmtResult == PamBackend::AccMgmtExipred) {
+        failLoginUser(tr("Your account has expired. Contact your system administrator for more details."));
+        return;
+    } else if (accMgmtResult == PamBackend::AccMgmtNeedRefresh) {
+        //Ask the user for a new password
+        if (!pamBackend->changeAuthTok()) {
+            failLoginUser(tr("Unable to update your password"));
+            return;
+        }
     }
 
     if (!pamBackend->setCred()) {
-        failLoginUser("PAM Credential Management failed");
+        failLoginUser(tr("PAM Credential Management failed"));
     }
 
     if (!pamBackend->startSession(sessionExec)) {
-        failLoginUser("Session unable to be opened");
+        failLoginUser(tr("Session unable to be opened"));
     }
 
     //At this point, the session is running.

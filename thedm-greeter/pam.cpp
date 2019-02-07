@@ -40,23 +40,42 @@ PamBackend::PamAuthenticationResult PamBackend::authenticate() {
     int retval = pam_authenticate(this->pamHandle, 0);
 
     if (!authenticating) {
-        return Cancelled;
+        return AuthCancelled;
     }
 
     authenticating = false;
     if (retval == PAM_SUCCESS) {
-        return Success;
+        return AuthSuccess;
     } else {
-        return Failure;
+        return AuthFailure;
     }
 }
 
-bool PamBackend::acctMgmt() {
-    return pam_acct_mgmt(this->pamHandle, PAM_SUCCESS) == PAM_SUCCESS;
+PamBackend::PamAccountMgmtResult PamBackend::acctMgmt() {
+    int retval = pam_acct_mgmt(this->pamHandle, PAM_SUCCESS);
+    if (retval == PAM_SUCCESS) {
+        return AccMgmtSuccess;
+    } else if (retval == PAM_ACCT_EXPIRED) {
+        return AccMgmtExipred;
+    } else if (retval == PAM_NEW_AUTHTOK_REQD) {
+        return AccMgmtNeedRefresh;
+    } else {
+        return AccMgmtFailure;
+    }
 }
 
 bool PamBackend::setCred() {
     return pam_setcred(this->pamHandle, PAM_ESTABLISH_CRED) == PAM_SUCCESS;
+}
+
+bool PamBackend::changeAuthTok() {
+    changingTok = true;
+    newPasswords = new PasswordChanges;
+    int retval = pam_chauthtok(this->pamHandle, PAM_CHANGE_EXPIRED_AUTHTOK);
+    delete newPasswords;
+    newPasswords = nullptr;
+
+    return retval == PAM_SUCCESS;
 }
 
 void PamBackend::putenv(QString env, QString var) {
@@ -154,8 +173,8 @@ PamInputCallback PamBackend::currentInputCallback() {
 int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr) {
     PamBackend* backend = (PamBackend*) appdata_ptr;
 
-    //Make sure authentication hasn't been cancelled
-    if (!backend->authenticating) {
+    //Make sure authentication or token changing hasn't been cancelled
+    if (!backend->authenticating && !backend->changingTok) {
         //Authentication has been cancelled
         return PAM_CONV_ERR;
     }
@@ -172,24 +191,67 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
         switch(msg[i]->msg_style) {
             case PAM_PROMPT_ECHO_ON:
             case PAM_PROMPT_ECHO_OFF: {
-                PamInputCallback callback = [=](QString response, bool canceled) {
-                    if (canceled) {
-                        loop->exit(1);
+                QString message = QString::fromLocal8Bit(msg[i]->msg);
+                qDebug() << message;
+                if (message.startsWith("Current password:") && backend->changingTok) {
+                    PamAuthTokCallback callback = [=](QString current, QString newPasswordInput, QString newConfirmInput, bool canceled) {
+                        if (canceled) {
+                            loop->exit(1);
+                        } else {
+                            (*resp)[i].resp = strdup(current.toLocal8Bit().data());
+                            backend->newPasswords->newPassword = newPasswordInput;
+                            backend->newPasswords->newConfirm = newConfirmInput;
+                            loop->quit();
+                        }
+                    };
+
+                    emit backend->passwordChangeRequired(true, callback);
+                } else if (message.startsWith("New password:") && backend->changingTok) {
+                    if (backend->newPasswords->newPassword != "") {
+                        (*resp)[i].resp = strdup(backend->newPasswords->newPassword.toLocal8Bit().data());
+                        QTimer::singleShot(0, loop, &QEventLoop::quit);
                     } else {
-                        (*resp)[i].resp = strdup(response.toLocal8Bit().data());
-                        loop->quit();
+                        PamAuthTokCallback callback = [=](QString current, QString newPasswordInput, QString newConfirmInput, bool canceled) {
+                            if (canceled) {
+                                loop->exit(1);
+                            } else {
+                                (*resp)[i].resp = strdup(newPasswordInput.toLocal8Bit().data());
+                                backend->newPasswords->newConfirm = newConfirmInput;
+                                loop->quit();
+                            }
+                        };
+
+                        emit backend->passwordChangeRequired(false, callback);
                     }
-                };
+                } else if (message.startsWith("Retype new password:") && backend->changingTok && backend->newPasswords->newConfirm != "") {
+                    (*resp)[i].resp = strdup(backend->newPasswords->newConfirm.toLocal8Bit().data());
+                    QTimer::singleShot(0, loop, &QEventLoop::quit);
+                } else {
+                    PamInputCallback callback = [=](QString response, bool canceled) {
+                        if (canceled) {
+                            loop->exit(1);
+                        } else {
+                            (*resp)[i].resp = strdup(response.toLocal8Bit().data());
+                            loop->quit();
+                        }
+                    };
 
-                backend->inputCallback = callback;
+                    backend->inputCallback = callback;
 
-                emit backend->inputRequired(msg[i]->msg_style == PAM_PROMPT_ECHO_ON, msg[i]->msg, callback);
+                    emit backend->inputRequired(msg[i]->msg_style == PAM_PROMPT_ECHO_ON, message, callback);
+                }
                 break;
             }
             case PAM_ERROR_MSG:
                 result = PAM_CONV_ERR;
             case PAM_TEXT_INFO:
                 emit backend->message(msg[i]->msg);
+
+                //Make sure the message is shown for at least 3 seconds
+                QTimer::singleShot(3000, [=] {
+                    loop->exit();
+                });
+
                 break;
         }
 
@@ -210,6 +272,7 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
         *resp = nullptr;
 
         backend->authenticating = false;
+        backend->changingTok = false;
     }
 
     return result;

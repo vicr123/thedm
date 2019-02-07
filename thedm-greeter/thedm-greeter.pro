@@ -36,19 +36,22 @@ SOURCES += \
     pam.cpp \
     underlineanimation.cpp \
     pamquestion.cpp \
-    poweroptions.cpp
+    poweroptions.cpp \
+    pamchauthtok.cpp
 
 HEADERS += \
     mainwindow.h \
     pam.h \
     underlineanimation.h \
     pamquestion.h \
-    poweroptions.h
+    poweroptions.h \
+    pamchauthtok.h
 
 FORMS += \
         mainwindow.ui \
     pamquestion.ui \
-    poweroptions.ui
+    poweroptions.ui \
+    pamchauthtok.ui
 
 TRANSLATIONS += \
     translations/au_AU.ts \

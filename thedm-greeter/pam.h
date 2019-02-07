@@ -41,6 +41,7 @@ inline const QDBusArgument &operator>>(const QDBusArgument &arg, QStringDBusObje
 }
 
 typedef std::function<void(QString,bool)> PamInputCallback;
+typedef std::function<void(QString,QString,QString,bool)> PamAuthTokCallback;
 
 class PamBackend : public QObject {
     Q_OBJECT
@@ -52,16 +53,24 @@ class PamBackend : public QObject {
         PamInputCallback currentInputCallback();
 
         enum PamAuthenticationResult {
-            Success,
-            Failure,
-            Cancelled
+            AuthSuccess,
+            AuthFailure,
+            AuthCancelled
+        };
+
+        enum PamAccountMgmtResult {
+            AccMgmtSuccess,
+            AccMgmtFailure,
+            AccMgmtExipred,
+            AccMgmtNeedRefresh
         };
 
     public slots:
         PamAuthenticationResult authenticate();
-        bool acctMgmt();
+        PamAccountMgmtResult acctMgmt();
         bool setCred();
         bool startSession(QString exec);
+        bool changeAuthTok();
         void waitForSessionEnd();
         void putenv(QString env, QString value);
         void setItem(int type, const void* value);
@@ -69,6 +78,7 @@ class PamBackend : public QObject {
 
     signals:
         void inputRequired(bool echo, QString msg, PamInputCallback callback);
+        void passwordChangeRequired(bool needOldPassword, PamAuthTokCallback callback);
         void message(QString warning);
 
     private:
@@ -80,7 +90,14 @@ class PamBackend : public QObject {
         int sessionPid;
 
         bool authenticating = false;
+        bool changingTok = false;
         bool sessionOpen = false;
+
+        struct PasswordChanges {
+            QString newPassword;
+            QString newConfirm;
+        };
+        PasswordChanges* newPasswords;
 
         PamInputCallback inputCallback;
 };
