@@ -242,15 +242,20 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
                 break;
             }
             case PAM_ERROR_MSG:
-                result = PAM_CONV_ERR;
             case PAM_TEXT_INFO:
-                emit backend->message(msg[i]->msg);
+                QString message = QString::fromLocal8Bit(msg[i]->msg);
+                if (message.startsWith("Changing password for") && backend->changingTok) {
+                    //Ignore
+                    QTimer::singleShot(0, loop, &QEventLoop::quit);
+                } else {
+                    emit backend->message(message);
 
-                //Make sure the message is shown for at least 3 seconds
-                QTimer::singleShot(3000, [=] {
-                    loop->exit();
-                });
+                    //Make sure the message is shown for at least 3 seconds
+                    QTimer::singleShot(3000, [=] {
+                        loop->exit();
+                    });
 
+                }
                 break;
         }
 

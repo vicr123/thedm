@@ -313,6 +313,7 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
         });
 
         p->show(this);
+        this->setEnabled(true);
     });
 
     PamBackend::PamAuthenticationResult authResult = pamBackend->authenticate();
