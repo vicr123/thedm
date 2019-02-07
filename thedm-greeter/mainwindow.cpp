@@ -85,6 +85,8 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
     ui->hostnameLabel->setText(QSysInfo::machineHostName());
     ui->hostnameLabel_2->setText(QSysInfo::machineHostName());
 
+    pulse.start("pulseaudio");
+
     //Load users
     for (int i = settings->value("users/uidMin", 1000).toInt(); i < settings->value("users/uidMax", 10000).toInt(); i++) {
         //Get user info
@@ -236,7 +238,14 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
 
             QTimer::singleShot(100, [=] {
                 ui->PasswordUnderline->startAnimation();
-                tVirtualKeyboard::instance()->showKeyboard();
+
+                QMetaObject::Connection* cn = new QMetaObject::Connection();
+                *cn = connect(ui->pagesStack, &tStackedWidget::currentChanged, [=](int current) {
+                    disconnect(*cn);
+
+                    ui->password->setFocus(Qt::PopupFocusReason);
+                    delete cn;
+                });
             });
             passwordScreenShown = true;
         } else {
@@ -378,6 +387,7 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
     //TODO: Check to see if a password was not input and pause the PAM transaction here if so
     this->currentLoginUid = uid;
     if (!passwordScreenShown) {
+        //Pause the PAM transaction so the user can choose the session
         ui->loginStack->setCurrentIndex(1);
         ui->usernameLabel_2->setText(tr("Hi %1!").arg(displayName));
         ui->pagesStack->setCurrentIndex(1);
@@ -399,11 +409,14 @@ void MainWindow::attemptStartSessionUser() {
     internalSettings->setValue(QString::number(this->currentLoginUid), ui->sessionSelect->text());
     internalSettings->endGroup();
     internalSettings->sync();
-    qDebug() << internalSettings->status();
 
     if (!pamBackend->startSession(sessionExec)) {
         failLoginUser(tr("Session unable to be opened"));
     }
+
+    //Kill pulseaudio
+    //The DE will autostart it
+    pulse.kill();
 
     //At this point, the session is running.
     QApplication::setQuitOnLastWindowClosed(false);
@@ -498,13 +511,13 @@ void MainWindow::showFullScreen() {
         anim->setEasingCurve(QEasingCurve::OutCubic);
         connect(anim, SIGNAL(finished()), anim, SLOT(deleteLater()));
         anim->start();
+
+        this->activateWindow();
     });
 
     QMargins currentMargins = ui->coverFrame->contentsMargins();
     currentMargins.setBottom(ui->unlockPromptFrame->height());
     ui->coverFrame->layout()->setContentsMargins(currentMargins);
-
-    ui->password->setFocus();
 }
 
 void MainWindow::tick() {
@@ -597,7 +610,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *e) {
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
     QFileInfo backgroundInfo(background);
-    ui->coverFrame->setGeometry(0, 0, this->width(), this->height());
+    if (coverHidden) {
+        ui->coverFrame->setGeometry(0, -this->height(), this->width(), this->height());
+    } else {
+        ui->coverFrame->setGeometry(0, 0, this->width(), this->height());
+    }
     ui->passwordFrame->setGeometry(0, 0, this->width(), this->height());
     if (backgroundInfo.suffix() == "svg") {
         image = QPixmap(this->size());
@@ -873,7 +890,6 @@ void MainWindow::showCover() {
 
         //typePassword = false;
         ui->password->setText("");
-        ui->password->setFocus();
 
         ui->unlockPromptFrame->setGeometry(0, this->height() - ui->unlockPromptFrame->height(), this->width(), ui->unlockPromptFrame->height());
         coverHidden = false;
@@ -918,21 +934,6 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, LoginSession &ses
     argument >> session.sessionId >> session.userId >> session.username >> session.seat >> session.path;
     argument.endStructure();
     return argument;
-}
-
-void MainWindow::on_passwordButton_toggled(bool checked)
-{
-    if (checked) {
-        ui->loginStack->setCurrentIndex(0);
-        ui->password->setFocus();
-    }
-}
-
-void MainWindow::on_mousePasswordButton_toggled(bool checked)
-{
-    if (checked) {
-        ui->loginStack->setCurrentIndex(1);
-    }
 }
 
 void MainWindow::on_loginStack_currentChanged(int arg1)

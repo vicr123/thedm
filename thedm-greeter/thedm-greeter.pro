@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui dbus thelib svg x11extras
-LIBS     += -lpam -lpam_misc
+LIBS     += -lpam -lpam_misc -lthe-libs
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

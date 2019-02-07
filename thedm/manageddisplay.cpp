@@ -27,6 +27,7 @@
 #include <the-libs_global.h>
 
 #include <unistd.h>
+#include <signal.h>
 
 struct ManagedDisplayPrivate {
     QProcess* x11Process = nullptr;
@@ -119,11 +120,22 @@ void ManagedDisplay::doSpawnGreeter() {
     env.insert("QT_QPA_PLATFORMTHEME", "ts");
     env.insert("QT_IM_MODULE", "ts-kbd");
 
+    //Spawn a DBus session bus
+    QProcess dbusLaunchProcess;
+    dbusLaunchProcess.start("dbus-launch --sh-syntax");
+    dbusLaunchProcess.waitForFinished();
+    while (!dbusLaunchProcess.atEnd()) {
+        QString envvar = dbusLaunchProcess.readLine();
+        int sepLocation = envvar.indexOf("=");
+        env.insert(envvar.left(sepLocation), envvar.mid(sepLocation + 1));
+    }
+
     //Spawn the greeter
+    //Also spawn a DBus session bus
     d->greeterProcess = new QProcess();
     d->greeterProcess->setProcessEnvironment(env);
     d->greeterProcess->setProcessChannelMode(QProcess::ForwardedChannels);
-    d->greeterProcess->start(possibleGreeters.first() + " " + QString::number(d->vt));
+    d->greeterProcess->start("dbus-launch " + possibleGreeters.first() + " " + QString::number(d->vt));
     connect(d->greeterProcess, QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished), [=](int exitCode, QProcess::ExitStatus status) {
         qDebug() << "Greeter exited with exit code" << exitCode;
         switch (exitCode) {
@@ -146,6 +158,12 @@ void ManagedDisplay::doSpawnGreeter() {
                 return;
             }
         }
+
+        //Kill the DBus session bus
+        if (env.contains("DBUS_SESSION_BUS_PID")) {
+            kill(env.value("DBUS_SESSION_BUS_PID").toInt(), SIGTERM);
+        }
+
         this->deleteLater();
     });
 }

@@ -62,10 +62,6 @@ class MainWindow : public QMainWindow
 
         void on_password_returnPressed();
 
-        void on_passwordButton_toggled(bool checked);
-
-        void on_mousePasswordButton_toggled(bool checked);
-
         void on_loginStack_currentChanged(int arg1);
 
         void on_powerButton_clicked();
@@ -104,6 +100,8 @@ class MainWindow : public QMainWindow
         QString sessionExec;
         QTranslator* userTranslator;
         QList<QToolButton*> knownUsers;
+
+        QProcess pulse;
 
         QString vtnr;
 
