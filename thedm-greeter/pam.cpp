@@ -192,7 +192,6 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
             case PAM_PROMPT_ECHO_ON:
             case PAM_PROMPT_ECHO_OFF: {
                 QString message = QString::fromLocal8Bit(msg[i]->msg);
-                qDebug() << message;
                 if (message.startsWith("Current password:") && backend->changingTok) {
                     PamAuthTokCallback callback = [=](QString current, QString newPasswordInput, QString newConfirmInput, bool canceled) {
                         if (canceled) {
