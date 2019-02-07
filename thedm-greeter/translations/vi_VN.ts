@@ -54,7 +54,7 @@
     <message>
         <location filename="../mainwindow.ui" line="796"/>
         <source>Ready to log in?</source>
-        <translation type="unfinished"></translation>
+        <translation>Bạn sẵn sàng đăng nhập chưa?</translation>
     </message>
     <message>
         <location filename="../mainwindow.ui" line="983"/>
@@ -90,7 +90,7 @@
     <message>
         <location filename="../mainwindow.cpp" line="268"/>
         <source>PAM Message</source>
-        <translation type="unfinished"></translation>
+        <translation>Tin nhắn PAM</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="332"/>
@@ -101,27 +101,27 @@
     <message>
         <location filename="../mainwindow.cpp" line="354"/>
         <source>PAM Account Management failed</source>
-        <translation type="unfinished"></translation>
+        <translation>Quản lý tài khoản PAM thất bại</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="357"/>
         <source>Your account has expired. Contact your system administrator for more details.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tài khoản của bạn đã hết hạn. Liên hệ với quản trị viên của bạn để hiểu thêm chi tiết.</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="362"/>
         <source>Unable to update your password</source>
-        <translation type="unfinished"></translation>
+        <translation>Không có thể cập nhật mật khẩu</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="382"/>
         <source>PAM Credential Management failed</source>
-        <translation type="unfinished"></translation>
+        <translation>Quản lý chứng chỉ PAM thất bại</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="386"/>
         <source>Session unable to be opened</source>
-        <translation type="unfinished"></translation>
+        <translation>Phiên không có thể mở</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="443"/>
@@ -214,32 +214,32 @@
     <message>
         <location filename="../pamchauthtok.ui" line="46"/>
         <source>Cancel</source>
-        <translation type="unfinished">Hủy</translation>
+        <translation>Hủy</translation>
     </message>
     <message>
         <location filename="../pamchauthtok.ui" line="74"/>
         <source>Change Password</source>
-        <translation type="unfinished"></translation>
+        <translation>Đổi mật khẩu</translation>
     </message>
     <message>
         <location filename="../pamchauthtok.ui" line="146"/>
         <source>Current Password</source>
-        <translation type="unfinished"></translation>
+        <translation>Mật khẩu hiện tại</translation>
     </message>
     <message>
         <location filename="../pamchauthtok.ui" line="156"/>
         <source>New Password</source>
-        <translation type="unfinished"></translation>
+        <translation>Mật khẩu mới</translation>
     </message>
     <message>
         <location filename="../pamchauthtok.ui" line="166"/>
         <source>Confirm New Password</source>
-        <translation type="unfinished"></translation>
+        <translation>Xác nhận mật khẩu mới</translation>
     </message>
     <message>
         <location filename="../pamchauthtok.ui" line="90"/>
         <source>Accept</source>
-        <translation type="unfinished">Chấp nhận</translation>
+        <translation>Chấp nhận</translation>
     </message>
 </context>
 <context>
