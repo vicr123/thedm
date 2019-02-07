@@ -76,6 +76,10 @@ class MainWindow : public QMainWindow
 
         void on_someoneElseButton_clicked();
 
+        void on_unlockButton_2_clicked();
+
+        void on_sessionSelect_2_triggered(QAction *arg1);
+
     private:
         Ui::MainWindow *ui;
 
@@ -108,7 +112,10 @@ class MainWindow : public QMainWindow
         tPopover* currentInfoMessage = nullptr;
 
         void attemptLoginUser(QString username, QString displayName, QString homeDir);
+        void attemptStartSessionUser();
         void failLoginUser(QString reason);
+
+        bool passwordScreenShown = false;
 };
 
 #endif // MAINWINDOW_H

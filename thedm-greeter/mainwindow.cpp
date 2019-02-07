@@ -135,6 +135,7 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
         on_sessionSelect_triggered(sessionsMenu->actions().first());
     }
     ui->sessionSelect->setMenu(sessionsMenu);
+    ui->sessionSelect_2->setMenu(sessionsMenu);
 
     QTimer* timer = new QTimer();
     timer->setInterval(1000);
@@ -177,6 +178,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::attemptLoginUser(QString username, QString displayName, QString homeDir) {
     this->setEnabled(false);
+    passwordScreenShown = false;
 
     QSettings tsSettings(homeDir + "/.config/theSuite/theShell.conf", QSettings::IniFormat);
 
@@ -207,8 +209,10 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
         }
 
         if (msg == "Password: ") {
+            ui->loginStack->setCurrentIndex(0);
             ui->usernameLabel->setText(tr("Hi %1!").arg(displayName));
             ui->pagesStack->setCurrentIndex(1);
+            ui->LoginOptions->setVisible(true);
             currentLoginUsername = username;
 
             if (QFile(homeDir + "/.theshell/mousepassword").exists()) {
@@ -223,6 +227,7 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
                 ui->PasswordUnderline->startAnimation();
                 tVirtualKeyboard::instance()->showKeyboard();
             });
+            passwordScreenShown = true;
         } else {
             PamQuestion* q = new PamQuestion(echo, msg);
             q->setTitle(tr("PAM Challenge"));
@@ -336,12 +341,15 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
         return;
     }
 
-    //TODO: Check to see if a password was not input and pause the PAM transaction here if so
-
-
     pamBackend->putenv("XDG_SESSION_DESKTOP", "theShell");
 
     PamBackend::PamAccountMgmtResult accMgmtResult = pamBackend->acctMgmt();
+
+    //Dismiss the info message if it's showing
+    if (this->currentInfoMessage != nullptr) {
+        this->currentInfoMessage->dismiss();
+        this->currentInfoMessage = nullptr;
+    }
     if (accMgmtResult == PamBackend::AccMgmtFailure) {
         failLoginUser(tr("PAM Account Management failed"));
         return;
@@ -356,6 +364,20 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
         }
     }
 
+    //TODO: Check to see if a password was not input and pause the PAM transaction here if so
+    if (!passwordScreenShown) {
+        ui->loginStack->setCurrentIndex(1);
+        ui->usernameLabel_2->setText(tr("Hi %1!").arg(displayName));
+        ui->pagesStack->setCurrentIndex(1);
+        currentLoginUsername = username;
+        ui->LoginOptions->setVisible(false);
+        this->setEnabled(true);
+    } else {
+        attemptStartSessionUser();
+    }
+}
+
+void MainWindow::attemptStartSessionUser() {
     if (!pamBackend->setCred()) {
         failLoginUser(tr("PAM Credential Management failed"));
     }
@@ -723,8 +745,7 @@ void MainWindow::BatteryChanged() {
                     batteryText.append(" (" + tr("Not Charging") + ")");
                     break;
                 }
-                displayOutput.append(batteryText)
-                        ;
+                displayOutput.append(batteryText);
             }
         }
     }
@@ -930,13 +951,20 @@ void MainWindow::on_powerButton_clicked()
 
 void MainWindow::on_goBackUserSelect_clicked()
 {
-    pamBackend->currentInputCallback()("", true);
-    ui->password->setText("");
+    if (ui->loginStack->currentIndex() == 0) {
+        pamBackend->currentInputCallback()("", true);
+        ui->password->setText("");
+    } else {
+        ui->pagesStack->setCurrentIndex(0);
+        pamBackend->deleteLater();
+        this->pamBackend = nullptr;
+    }
 }
 
 void MainWindow::on_sessionSelect_triggered(QAction *arg1)
 {
     ui->sessionSelect->setText(arg1->text());
+    ui->sessionSelect_2->setText(arg1->text());
     sessionExec = arg1->data().toString();
 }
 
@@ -984,4 +1012,14 @@ void MainWindow::on_someoneElseButton_clicked()
     });
 
     p->show(this);
+}
+
+void MainWindow::on_unlockButton_2_clicked()
+{
+    attemptStartSessionUser();
+}
+
+void MainWindow::on_sessionSelect_2_triggered(QAction *arg1)
+{
+    on_sessionSelect_triggered(arg1);
 }
