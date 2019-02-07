@@ -32,6 +32,7 @@ namespace Ui {
 }
 
 class tPopover;
+class QToolButton;
 
 class MainWindow : public QMainWindow
 {
@@ -97,6 +98,7 @@ class MainWindow : public QMainWindow
         QString currentLoginUsername;
         QString sessionExec;
         QTranslator* userTranslator;
+        QList<QToolButton*> knownUsers;
 
         QString vtnr;
 

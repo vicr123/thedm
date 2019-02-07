@@ -103,12 +103,21 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
                 userButton->setText(gecosDataList.first());
             }
             ui->userList->addWidget(userButton);
+            knownUsers.append(userButton);
             connect(userButton, &QPushButton::clicked, [=] {
                 attemptLoginUser(username, userButton->text(), home);
             });
         }
     }
     ui->userScroll->setFixedHeight(qMin((float) ui->userList->sizeHint().height(), this->height() / 4 * theLibsGlobal::getDPIScaling()));
+
+    //Check to see if there's only one known user
+    if (knownUsers.count() == 1) {
+        //Immediately start authentication as the only known user
+        QTimer::singleShot(0, [=] {
+            knownUsers.first()->click();
+        });
+    }
 
     //Load sessions
     QMenu* sessionsMenu = new QMenu();
@@ -272,19 +281,24 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
         this->currentInfoMessage = p;
     });
 
-    if (!pamBackend->authenticate()) {
+    PamBackend::PamAuthenticationResult authResult = pamBackend->authenticate();
+    //Dismiss the info message if it's showing
+    if (this->currentInfoMessage != nullptr) {
+        this->currentInfoMessage->dismiss();
+        this->currentInfoMessage = nullptr;
+    }
+
+    if (authResult == PamBackend::Failure) {
         failLoginUser(tr("Authentication failed."));
         //Try to log in again
         QTimer::singleShot(0, [=] {
             attemptLoginUser(username, displayName, homeDir);
         });
         return;
-    }
-
-    //Dismiss the info message if it's showing
-    if (this->currentInfoMessage != nullptr) {
-        this->currentInfoMessage->dismiss();
-        this->currentInfoMessage = nullptr;
+    } else if (authResult == PamBackend::Cancelled) {
+        //Go back to the main screen
+        ui->pagesStack->setCurrentIndex(0);
+        return;
     }
 
     //TODO: Check to see if a password was not input and pause the PAM transaction here if so
@@ -726,46 +740,28 @@ void MainWindow::BatteryChanged() {
 
 
 void MainWindow::hideCover() {
-    //if (!typePassword) {
-        tPropertyAnimation* animation = new tPropertyAnimation(ui->coverFrame, "geometry");
-        animation->setStartValue(ui->coverFrame->geometry());
-        animation->setEndValue(QRect(0, 0, this->width(), 0));
-        animation->setDuration(500);
-        animation->setEasingCurve(QEasingCurve::OutCubic);
-        animation->start();
-        connect(animation, &tPropertyAnimation::finished, [=]() {
-            QString name = qgetenv("USER");
-            if (name.isEmpty()) {
-                name = qgetenv("USERNAME");
-            }
+    tPropertyAnimation* animation = new tPropertyAnimation(ui->coverFrame, "geometry");
+    animation->setStartValue(ui->coverFrame->geometry());
+    animation->setEndValue(QRect(0, 0, this->width(), 0));
+    animation->setDuration(500);
+    animation->setEasingCurve(QEasingCurve::OutCubic);
+    animation->start();
+    connect(animation, &tPropertyAnimation::finished, animation, &tPropertyAnimation::deleteLater);
 
-            QProcess* tscheckpass = new QProcess();
-            tscheckpass->start("tscheckpass " + name);
-            tscheckpass->waitForFinished();
-            if (tscheckpass->exitCode() == 0) {
-                QApplication::exit(0);
-            }
+    tPropertyAnimation* opacity = new tPropertyAnimation(passwordFrameOpacity, "opacity");
+    opacity->setStartValue((float) 0);
+    opacity->setEndValue((float) 1);
+    opacity->setDuration(500);
+    opacity->setEasingCurve(QEasingCurve::OutCubic);
+    connect(opacity, &tPropertyAnimation::valueChanged, [=] {
+        ui->pagesStack->update();
+        ui->pagesStack->currentWidget()->update();
+        ui->userScrollContents->update();
+    });
+    connect(opacity, SIGNAL(finished()), opacity, SLOT(deleteLater()));
+    opacity->start();
 
-            animation->deleteLater();
-        });
-
-        tPropertyAnimation* opacity = new tPropertyAnimation(passwordFrameOpacity, "opacity");
-        opacity->setStartValue((float) 0);
-        opacity->setEndValue((float) 1);
-        opacity->setDuration(500);
-        opacity->setEasingCurve(QEasingCurve::OutCubic);
-        connect(opacity, &tPropertyAnimation::valueChanged, [=] {
-            ui->pagesStack->update();
-            ui->page_3->update();
-            ui->userScrollContents->update();
-        });
-        connect(opacity, SIGNAL(finished()), opacity, SLOT(deleteLater()));
-        opacity->start();
-
-        //typePassword = true;
-        coverHidden = true;
-        ui->password->setFocus();
-    //}
+    coverHidden = true;
 }
 
 void MainWindow::showCover() {
@@ -890,7 +886,6 @@ void MainWindow::on_goBackUserSelect_clicked()
 {
     pamBackend->currentInputCallback()("", true);
     ui->password->setText("");
-    ui->pagesStack->setCurrentIndex(0);
 }
 
 void MainWindow::on_sessionSelect_triggered(QAction *arg1)

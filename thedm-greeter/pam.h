@@ -51,8 +51,14 @@ class PamBackend : public QObject {
 
         PamInputCallback currentInputCallback();
 
+        enum PamAuthenticationResult {
+            Success,
+            Failure,
+            Cancelled
+        };
+
     public slots:
-        bool authenticate();
+        PamAuthenticationResult authenticate();
         bool acctMgmt();
         bool setCred();
         bool startSession(QString exec);

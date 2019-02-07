@@ -35,12 +35,20 @@ PamBackend::~PamBackend() {
     pam_end(this->pamHandle, PAM_SUCCESS);
 }
 
-bool PamBackend::authenticate() {
+PamBackend::PamAuthenticationResult PamBackend::authenticate() {
     authenticating = true;
     int retval = pam_authenticate(this->pamHandle, 0);
 
+    if (!authenticating) {
+        return Cancelled;
+    }
+
     authenticating = false;
-    return retval == PAM_SUCCESS;
+    if (retval == PAM_SUCCESS) {
+        return Success;
+    } else {
+        return Failure;
+    }
 }
 
 bool PamBackend::acctMgmt() {
