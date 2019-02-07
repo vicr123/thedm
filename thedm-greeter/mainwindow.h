@@ -100,6 +100,7 @@ class MainWindow : public QMainWindow
         QGraphicsOpacityEffect* passwordFrameOpacity;
 
         QString currentLoginUsername;
+        int currentLoginUid;
         QString sessionExec;
         QTranslator* userTranslator;
         QList<QToolButton*> knownUsers;
@@ -107,11 +108,12 @@ class MainWindow : public QMainWindow
         QString vtnr;
 
         QSettings* settings;
+        QSettings* internalSettings;
 
         PamBackend* pamBackend;
         tPopover* currentInfoMessage = nullptr;
 
-        void attemptLoginUser(QString username, QString displayName, QString homeDir);
+        void attemptLoginUser(QString username, QString displayName, QString homeDir, int uid);
         void attemptStartSessionUser();
         void failLoginUser(QString reason);
 

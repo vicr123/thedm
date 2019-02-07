@@ -56,6 +56,7 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
 {
     ui->setupUi(this);
     settings = new QSettings("/etc/thedm.conf", QSettings::IniFormat);
+    internalSettings = new QSettings(QString(SHAREDIR) + "internal.conf", QSettings::IniFormat);
 
     this->vtnr = vtnr;
 
@@ -106,7 +107,7 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
             ui->userList->addWidget(userButton);
             knownUsers.append(userButton);
             connect(userButton, &QPushButton::clicked, [=] {
-                attemptLoginUser(username, userButton->text(), home);
+                attemptLoginUser(username, userButton->text(), home, pw->pw_uid);
             });
         }
     }
@@ -176,7 +177,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::attemptLoginUser(QString username, QString displayName, QString homeDir) {
+void MainWindow::attemptLoginUser(QString username, QString displayName, QString homeDir, int uid) {
     this->setEnabled(false);
     passwordScreenShown = false;
 
@@ -192,6 +193,16 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
         userTranslator->load(userLocale.name(), QString(SHAREDIR) + "translations");
     }
     ui->retranslateUi(this);
+
+    //Choose the previously selected session for the user, otherwise leave it as the default
+    internalSettings->beginGroup("sessions");
+    if (internalSettings->contains(QString::number(uid))) {
+        QString sessionName = internalSettings->value(QString::number(uid)).toString();
+        for (QAction* a : ui->sessionSelect->menu()->actions()) {
+            if (a->text() == sessionName) on_sessionSelect_triggered(a); //Select the session if found
+        }
+    }
+    internalSettings->endGroup();
 
     pamBackend = new PamBackend(username);
     pamBackend->putenv("DISPLAY", qgetenv("DISPLAY"));
@@ -332,7 +343,7 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
         failLoginUser(tr("Authentication failed."));
         //Try to log in again
         QTimer::singleShot(0, [=] {
-            attemptLoginUser(username, displayName, homeDir);
+            attemptLoginUser(username, displayName, homeDir, uid);
         });
         return;
     } else if (authResult == PamBackend::AuthCancelled) {
@@ -365,6 +376,7 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
     }
 
     //TODO: Check to see if a password was not input and pause the PAM transaction here if so
+    this->currentLoginUid = uid;
     if (!passwordScreenShown) {
         ui->loginStack->setCurrentIndex(1);
         ui->usernameLabel_2->setText(tr("Hi %1!").arg(displayName));
@@ -381,6 +393,13 @@ void MainWindow::attemptStartSessionUser() {
     if (!pamBackend->setCred()) {
         failLoginUser(tr("PAM Credential Management failed"));
     }
+
+    //Save the session
+    internalSettings->beginGroup("sessions");
+    internalSettings->setValue(QString::number(this->currentLoginUid), ui->sessionSelect->text());
+    internalSettings->endGroup();
+    internalSettings->sync();
+    qDebug() << internalSettings->status();
 
     if (!pamBackend->startSession(sessionExec)) {
         failLoginUser(tr("Session unable to be opened"));
@@ -996,7 +1015,7 @@ void MainWindow::on_someoneElseButton_clicked()
             }
 
             QTimer::singleShot(0, [=] {
-                attemptLoginUser(username, displayName, home);
+                attemptLoginUser(username, displayName, home, pw->pw_uid);
             });
         } else {
             tToast* toast = new tToast();
