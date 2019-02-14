@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     parser.addOption({"test-mode", "Run theDM in testing mode"});
     parser.process(a);
 
-    QDBusConnection::systemBus().registerService("org.freedesktop.DisplayManager1");
+    QDBusConnection::systemBus().registerService("org.freedesktop.DisplayManager");
     if (parser.isSet("test-mode")) {
         qDebug() << "Running in test mode";
     } else {
