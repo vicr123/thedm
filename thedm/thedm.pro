@@ -58,5 +58,5 @@ unix {
     pam.files = pam/thedm
     pam.path = /etc/pam.d/
 
-    INSTALLS += target systemd pam #translations
+    INSTALLS += target systemd pam dbus #translations
 }
