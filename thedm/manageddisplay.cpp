@@ -181,7 +181,7 @@ void ManagedDisplay::doSpawnGreeter() {
     }
 
     QStringList args = {
-        "dbus-launch",
+        //"dbus-launch",
         possibleGreeters.first(),
         "--vt", QString::number(d->vt),
         "--seed", d->seed,

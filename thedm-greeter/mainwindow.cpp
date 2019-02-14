@@ -438,6 +438,7 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
 void MainWindow::attemptStartSessionUser() {
     if (!pamBackend->setCred()) {
         failLoginUser(tr("PAM Credential Management failed"));
+        return;
     }
 
     //Save the session
@@ -448,6 +449,7 @@ void MainWindow::attemptStartSessionUser() {
 
     if (!pamBackend->startSession(sessionExec)) {
         failLoginUser(tr("Session unable to be opened"));
+        return;
     }
 
     if (master) {
