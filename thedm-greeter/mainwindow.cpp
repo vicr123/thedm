@@ -76,9 +76,27 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
             while (master->canReadLine()) {
                 QString line = master->readLine().trimmed();
                 if (line == "RESET") {
-                    //Reset PAM state
-                    ui->goBackUserSelect->click();
-                    showCover();
+                    //Wait a bit for PAM to "stabilize"
+                    QTimer::singleShot(100, [=] {
+                        //Reset PAM state
+                        if (ui->loginStack->currentIndex() == 1) {
+                            ui->goBackUserSelect->click();
+                        } else {
+                            switch (pamBackend->currentState()) {
+                                case PamBackend::Input:
+                                    pamBackend->currentInputCallback()("", false);
+                                    break;
+                                case PamBackend::AuthTok:
+                                    pamBackend->currentAuthCallback()("", "", "", false);
+                                    break;
+                                default:
+                                    //Do nothing
+                                    break;
+                            }
+                        }
+
+                        showCover();
+                    });
                 }
             }
         });

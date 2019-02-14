@@ -187,6 +187,14 @@ PamInputCallback PamBackend::currentInputCallback() {
     return this->inputCallback;
 }
 
+PamAuthTokCallback PamBackend::currentAuthCallback() {
+    return this->authTokCallback;
+}
+
+PamBackend::CallbackState PamBackend::currentState() {
+    return this->state;
+}
+
 int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr) {
     PamBackend* backend = (PamBackend*) appdata_ptr;
 
@@ -220,6 +228,8 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
                             loop->quit();
                         }
                     };
+                    backend->authTokCallback = callback;
+                    backend->state = AuthTok;
 
                     emit backend->passwordChangeRequired(true, callback);
                 } else if (message.startsWith("New password:") && backend->changingTok) {
@@ -236,6 +246,8 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
                                 loop->quit();
                             }
                         };
+                        backend->authTokCallback = callback;
+                        backend->state = AuthTok;
 
                         emit backend->passwordChangeRequired(false, callback);
                     }
@@ -251,8 +263,8 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
                             loop->quit();
                         }
                     };
-
                     backend->inputCallback = callback;
+                    backend->state = Input;
 
                     emit backend->inputRequired(msg[i]->msg_style == PAM_PROMPT_ECHO_ON, message, callback);
                 }
@@ -266,6 +278,7 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
                     QTimer::singleShot(0, loop, &QEventLoop::quit);
                 } else {
                     emit backend->message(message);
+                    backend->state = Message;
 
                     //Make sure the message is shown for at least 3 seconds
                     QTimer::singleShot(3000, [=] {
@@ -277,9 +290,15 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
         }
 
         if (loop->exec() != 0) {
+            //Reset the state
+            backend->state = None;
+
             result = PAM_CONV_ERR;
             break;
         }
+
+        //Reset the state
+        backend->state = None;
 
         if (result != PAM_SUCCESS) {
             break;
