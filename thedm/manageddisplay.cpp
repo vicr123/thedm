@@ -260,6 +260,7 @@ bool ManagedDisplay::needsSocket() {
 }
 
 void ManagedDisplay::socketAvailable(QLocalSocket* socket) {
+    qDebug() << "Socket acquired for " + d->srvName;
     d->sock = socket;
     connect(socket, &QLocalSocket::readyRead, [=] {
         while (socket->canReadLine()) {

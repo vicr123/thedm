@@ -84,10 +84,13 @@ void SeatManager::spawnGreeter() {
 
     //Create a random seed
     QString choices = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
     QString seed;
-    for (int i = 0; i < 127; i++) {
-        seed.append(choices.at(QRandomGenerator::global()->bounded(choices.count())));
-    }
+    do {
+        for (int i = 0; i < 127; i++) {
+            seed.append(choices.at(QRandomGenerator::global()->bounded(choices.count())));
+        }
+    } while (d->dpys.keys().contains(seed));
 
     ManagedDisplay* dpy = new ManagedDisplay(d->seat.toLower(), vt, d->testMode, seed, d->srv.serverName(), this);
     connect(dpy, &ManagedDisplay::displayGone, [=](ManagedDisplay::DisplayGoneReason reason) {
