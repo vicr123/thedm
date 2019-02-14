@@ -38,6 +38,7 @@ int main(int argc, char *argv[])
     parser->addOption({"seed", "Seed of the master theDM process", "seed"});
     parser->addOption({"vt", "VT that we're running on", "vt"});
     parser->addOption({"srv", "Name of local socket server to connect to", "srv"});
+    parser->addOption({"seat", "Name of seat this greeter is for", "seat"});
 
     parser->process(a);
 

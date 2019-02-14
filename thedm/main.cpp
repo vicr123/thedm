@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
         //Check if root
     }
 
-    SeatManager* s = new SeatManager("Seat0", parser.isSet("test-mode"));
+    SeatManager* s = new SeatManager("seat0", parser.isSet("test-mode"));
 
     return a.exec();
 }

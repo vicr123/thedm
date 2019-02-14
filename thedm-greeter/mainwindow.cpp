@@ -241,7 +241,12 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
     pamBackend->putenv("DISPLAY", qgetenv("DISPLAY"));
     pamBackend->putenv("XDG_SESSION_CLASS", "user");
     pamBackend->putenv("XDG_SESSION_TYPE", "x11");
-    pamBackend->putenv("XDG_SEAT", "seat0");
+    if (parser->isSet("seat")) {
+        pamBackend->putenv("XDG_SEAT", parser->value("seat"));
+        pamBackend->putenv("XDG_SEAT_PATH", "/org/freedesktop/DisplayManager/" + parser->value("seat"));
+    } else {
+        pamBackend->putenv("XDG_SEAT", "seat0");
+    }
     pamBackend->putenv("XDG_VTNR", this->vtnr);
     pamBackend->setItem(PAM_XDISPLAY, qgetenv("DISPLAY"));
     pamBackend->setItem(PAM_TTY, qgetenv("DISPLAY"));

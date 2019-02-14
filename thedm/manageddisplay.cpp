@@ -39,6 +39,7 @@ struct ManagedDisplayPrivate {
     QProcess* x11Process = nullptr;
     QProcess* greeterProcess = nullptr;
 
+    QString seat;
     QString seed;
     QString srvName;
     QString xdisplay;
@@ -125,6 +126,7 @@ ManagedDisplay::ManagedDisplay(QString seat, int vt, bool testMode, QString seed
     d->testMode = testMode;
     d->seed = seed;
     d->srvName = srvName;
+    d->seat = seat;
 
     doSpawnGreeter();
 }
@@ -142,6 +144,11 @@ ManagedDisplay::~ManagedDisplay() {
 }
 
 void ManagedDisplay::doSpawnGreeter() {
+    //Reset everything
+    d->sessionId = "";
+    d->username = "";
+    d->sock = nullptr;
+
     //Find the greeter path
     QStringList possibleGreeters;
     if (QFile("../thedm-greeter/thedm-greeter").exists()) {
@@ -178,7 +185,8 @@ void ManagedDisplay::doSpawnGreeter() {
         possibleGreeters.first(),
         "--vt", QString::number(d->vt),
         "--seed", d->seed,
-        "--srv", d->srvName
+        "--srv", d->srvName,
+        "--seat", d->seat
     };
 
     if (d->testMode) {

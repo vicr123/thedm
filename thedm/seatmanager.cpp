@@ -92,7 +92,7 @@ void SeatManager::spawnGreeter() {
         }
     } while (d->dpys.keys().contains(seed));
 
-    ManagedDisplay* dpy = new ManagedDisplay(d->seat.toLower(), vt, d->testMode, seed, d->srv.serverName(), this);
+    ManagedDisplay* dpy = new ManagedDisplay(d->seat, vt, d->testMode, seed, d->srv.serverName(), this);
     connect(dpy, &ManagedDisplay::displayGone, [=](ManagedDisplay::DisplayGoneReason reason) {
         d->dpys.remove(seed);
 
