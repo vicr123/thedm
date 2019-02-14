@@ -292,12 +292,15 @@ int ManagedDisplay::vt() {
 }
 
 void ManagedDisplay::activate() {
-    //Ask logind to activate session
-    QDBusMessage message = QDBusMessage::createMethodCall("org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "ActivateSession");
-    message.setArguments({d->sessionId});
+    if (d->loggedIn) {
+        //Ask logind to activate session
+        QDBusMessage message = QDBusMessage::createMethodCall("org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "ActivateSession");
+        message.setArguments({d->sessionId});
 
-    QDBusConnection::systemBus().call(message, QDBus::NoBlock);
-    //SDDM::VirtualTerminal::jumpToVt(d->vt, true);
+        QDBusConnection::systemBus().call(message, QDBus::NoBlock);
+    } else {
+        SDDM::VirtualTerminal::jumpToVt(d->vt, true);
+    }
 }
 
 QString ManagedDisplay::username() {
