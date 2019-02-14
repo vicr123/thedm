@@ -487,6 +487,8 @@ void MainWindow::attemptStartSessionUser() {
 
         //The session has ended; close the PAM session and exit
         pamBackend->deleteLater();
+
+        qDebug() << "PAM session closed; exiting now";
         QApplication::exit(0);
     });
 
