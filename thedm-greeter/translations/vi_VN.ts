@@ -94,7 +94,7 @@
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="388"/>
-        <location filename="../mainwindow.cpp" line="528"/>
+        <location filename="../mainwindow.cpp" line="529"/>
         <source>Authentication failed.</source>
         <translation>Xác thực thất bại.</translation>
     </message>
@@ -124,87 +124,87 @@
         <translation>Phiên không có thể mở</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="522"/>
+        <location filename="../mainwindow.cpp" line="523"/>
         <source>Couldn&apos;t log in</source>
         <translation>Không có thể đăng nhập</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="735"/>
-        <location filename="../mainwindow.cpp" line="815"/>
+        <location filename="../mainwindow.cpp" line="736"/>
+        <location filename="../mainwindow.cpp" line="816"/>
         <source>Charging</source>
         <translation>Đang sạc</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="763"/>
-        <location filename="../mainwindow.cpp" line="821"/>
+        <location filename="../mainwindow.cpp" line="764"/>
+        <location filename="../mainwindow.cpp" line="822"/>
         <source>Empty</source>
         <translation>Trống</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="767"/>
-        <location filename="../mainwindow.cpp" line="825"/>
+        <location filename="../mainwindow.cpp" line="768"/>
+        <location filename="../mainwindow.cpp" line="826"/>
         <source>Full</source>
         <translation>Đầy</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="772"/>
-        <location filename="../mainwindow.cpp" line="828"/>
+        <location filename="../mainwindow.cpp" line="773"/>
+        <location filename="../mainwindow.cpp" line="829"/>
         <source>Not Charging</source>
         <translation>Không sạc</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="777"/>
-        <location filename="../mainwindow.cpp" line="779"/>
+        <location filename="../mainwindow.cpp" line="778"/>
+        <location filename="../mainwindow.cpp" line="780"/>
         <source>%1% PC Battery%2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="784"/>
+        <location filename="../mainwindow.cpp" line="785"/>
         <source>No Battery Inserted</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="806"/>
+        <location filename="../mainwindow.cpp" line="807"/>
         <source>Pair %1 using theFile to see battery status.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="808"/>
+        <location filename="../mainwindow.cpp" line="809"/>
         <source>%1 battery unavailable. Device trusted?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="812"/>
+        <location filename="../mainwindow.cpp" line="813"/>
         <source>%1% battery on %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="818"/>
+        <location filename="../mainwindow.cpp" line="819"/>
         <source>Discharging</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1040"/>
+        <location filename="../mainwindow.cpp" line="1041"/>
         <source>What&apos;s the username of the user you&apos;d like to log in as?</source>
         <translation>Tên người dùng bạn muốn đăng nhập là gì?</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1041"/>
+        <location filename="../mainwindow.cpp" line="1042"/>
         <source>Log in as other user</source>
         <translation>Đăng nhập thành người khác</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1042"/>
+        <location filename="../mainwindow.cpp" line="1043"/>
         <source>Username</source>
         <translation>Tên người dùng</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1070"/>
+        <location filename="../mainwindow.cpp" line="1071"/>
         <source>User not found</source>
         <translation>Người dùng không tìm thấy</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1071"/>
+        <location filename="../mainwindow.cpp" line="1072"/>
         <source>Couldn&apos;t find that user. Make sure you&apos;ve spelled the username correctly.</source>
         <translation>Không có thể tìm thấy người dùng đó. Kiểm tra bạn đã viết đúng tên người dùng.</translation>
     </message>
