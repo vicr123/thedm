@@ -75,6 +75,7 @@ class PamBackend : public QObject {
         void putenv(QString env, QString value);
         void setItem(int type, const void* value);
         QString getenv(QString env);
+        void endSession();
 
     signals:
         void inputRequired(bool echo, QString msg, PamInputCallback callback);
@@ -86,6 +87,7 @@ class PamBackend : public QObject {
         pam_handle_t* pamHandle;
         struct passwd *pw;
         QString username;
+        QString dbusPid;
 
         int sessionPid;
 

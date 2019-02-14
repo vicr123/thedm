@@ -487,6 +487,9 @@ void MainWindow::attemptStartSessionUser() {
         //Now wait for the session to close
         pamBackend->waitForSessionEnd();
 
+        //Tear down the session
+        pamBackend->endSession();
+
         if (this->master != nullptr) {
             this->master->write("FINISHED\n");
             this->master->flush();

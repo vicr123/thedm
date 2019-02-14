@@ -20,20 +20,7 @@ PamBackend::PamBackend(QString username, QString sessionName, QObject* parent) :
 
 PamBackend::~PamBackend() {
     if (sessionOpen) {
-        //Tear down the session
-        pam_close_session(this->pamHandle, 0);
-
-        if (!testMode) {
-            //Kill the session if needed
-            QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
-            sessionInterface.call(QDBus::NoBlock, "Kill", "all", (int) SIGTERM);
-
-            //Give any remaining processes 10 seconds and then kill them
-            QTimer::singleShot(10000, [] {
-                QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
-                sessionInterface.call(QDBus::NoBlock, "Kill", "all", (int) SIGKILL);
-            });
-        }
+        endSession();
     }
     pam_end(this->pamHandle, PAM_SUCCESS);
 }
@@ -124,19 +111,24 @@ bool PamBackend::startSession(QString exec) {
     if (!exec.isEmpty()) {
         //Fork and start the session
 
+        //Start DBus
+        QProcess* dbusLaunch = new QProcess;
+        dbusLaunch->start("dbus-launch");
+        dbusLaunch->waitForFinished();
+        for (QString env : QString(dbusLaunch->readAll()).split("\n")) {
+            pam_putenv(pamHandle, env.toLocal8Bit().data());
+
+            if (env.startsWith("DBUS_SESSION_BUS_PID=")) {
+                this->dbusPid = env.mid(21);
+            }
+        }
+
         int pid = fork();
         if (pid == -1) {
             //Fork failed
             QApplication::exit();
             return false;
         } else if (pid == 0) {
-            //Start DBus
-            QProcess* dbusLaunch = new QProcess;
-            dbusLaunch->start("dbus-launch");
-            dbusLaunch->waitForFinished();
-            for (QString env : QString(dbusLaunch->readAll()).split("\n")) {
-                pam_putenv(pamHandle, env.toLocal8Bit().data());
-            }
 
             //Start Pulse
             QProcess::startDetached("pulseaudio");
@@ -167,6 +159,28 @@ bool PamBackend::startSession(QString exec) {
 
 void PamBackend::waitForSessionEnd() {
     waitpid(sessionPid, nullptr, 0);
+}
+
+void PamBackend::endSession() {
+    if (dbusPid != "") {
+        //Kill the DBus daemon
+        kill(dbusPid.left(dbusPid.indexOf(";")).toInt(), SIGTERM);
+    }
+
+    //Tear down the session
+    pam_close_session(this->pamHandle, 0);
+
+    if (!testMode) {
+        //Kill the session if needed
+        QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
+        sessionInterface.call(QDBus::NoBlock, "Kill", "all", (int) SIGTERM);
+
+        //Give any remaining processes 10 seconds and then kill them
+        QTimer::singleShot(10000, [] {
+            QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
+            sessionInterface.call(QDBus::NoBlock, "Kill", "all", (int) SIGKILL);
+        });
+    }
 }
 
 PamInputCallback PamBackend::currentInputCallback() {

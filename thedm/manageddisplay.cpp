@@ -226,7 +226,8 @@ void ManagedDisplay::doSpawnGreeter() {
 
         //Kill the DBus session bus
         if (env.contains("DBUS_SESSION_BUS_PID")) {
-            kill(env.value("DBUS_SESSION_BUS_PID").toInt(), SIGTERM);
+            QString process = env.value("DBUS_SESSION_BUS_PID");
+            kill(process.left(process.indexOf(";")).toInt(), SIGTERM);
         }
 
         this->deleteLater();

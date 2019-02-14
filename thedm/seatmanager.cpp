@@ -100,6 +100,7 @@ void SeatManager::spawnGreeter(int vt) {
 
         if (reason == ManagedDisplay::SessionExit) {
             //Switch to a greeter if one exists
+            //otherwise spawn a new greeter
             SwitchToGreeter();
         }
     });
