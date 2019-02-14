@@ -25,6 +25,7 @@
 #include <QGraphicsOpacityEffect>
 #include <QSettings>
 #include <QTranslator>
+#include <QLocalSocket>
 #include "pam.h"
 
 namespace Ui {
@@ -110,6 +111,8 @@ class MainWindow : public QMainWindow
 
         PamBackend* pamBackend;
         tPopover* currentInfoMessage = nullptr;
+
+        QLocalSocket* master = nullptr;
 
         void attemptLoginUser(QString username, QString displayName, QString homeDir, int uid);
         void attemptStartSessionUser();

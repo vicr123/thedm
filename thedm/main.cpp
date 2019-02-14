@@ -20,13 +20,32 @@
 #include <QCoreApplication>
 
 #include "seatmanager.h"
+#include <QDebug>
 #include <QProcess>
+#include <QDBusConnection>
+#include <QCommandLineParser>
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    SeatManager* s = new SeatManager("seat0");
+    a.setOrganizationName("theSuite");
+    a.setOrganizationDomain("");
+    a.setApplicationName("theDM");
+
+    QCommandLineParser parser;
+    parser.addHelpOption();
+    parser.addOption({"test-mode", "Run theDM in testing mode"});
+    parser.process(a);
+
+    QDBusConnection::systemBus().registerService("org.freedesktop.DisplayManager1");
+    if (parser.isSet("test-mode")) {
+        qDebug() << "Running in test mode";
+    } else {
+        //Check if root
+    }
+
+    SeatManager* s = new SeatManager("Seat0", parser.isSet("test-mode"));
 
     return a.exec();
 }

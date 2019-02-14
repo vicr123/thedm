@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 
 extern QString currentVt;
+extern bool testMode;
 
 PamBackend::PamBackend(QString username, QString sessionName, QObject* parent) : QObject(parent) {
     struct pam_conv pamConversationParams = {
@@ -22,15 +23,17 @@ PamBackend::~PamBackend() {
         //Tear down the session
         pam_close_session(this->pamHandle, 0);
 
-        //Kill the session if needed
-        QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
-        sessionInterface.call(QDBus::NoBlock, "Kill", "all", (int) SIGTERM);
-
-        //Give any remaining processes 10 seconds and then kill them
-        QTimer::singleShot(10000, [] {
+        if (!testMode) {
+            //Kill the session if needed
             QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
-            sessionInterface.call(QDBus::NoBlock, "Kill", "all", (int) SIGKILL);
-        });
+            sessionInterface.call(QDBus::NoBlock, "Kill", "all", (int) SIGTERM);
+
+            //Give any remaining processes 10 seconds and then kill them
+            QTimer::singleShot(10000, [] {
+                QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
+                sessionInterface.call(QDBus::NoBlock, "Kill", "all", (int) SIGKILL);
+            });
+        }
     }
     pam_end(this->pamHandle, PAM_SUCCESS);
 }

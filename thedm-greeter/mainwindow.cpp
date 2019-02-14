@@ -24,6 +24,7 @@
 #include <QDBusMessage>
 #include <QSvgRenderer>
 #include <QProcess>
+#include <QCommandLineParser>
 #include <QX11Info>
 #include <tpropertyanimation.h>
 #include <QDateTime>
@@ -50,6 +51,8 @@
 #undef KeyPress
 #undef KeyRelease
 
+extern QCommandLineParser* parser;
+
 MainWindow::MainWindow(QString vtnr, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -62,6 +65,28 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
 
     userTranslator = new QTranslator();
     QApplication::installTranslator(userTranslator);
+
+    //Attempt to connect to server if possible
+    if (parser->isSet("srv") && parser->isSet("seed")) {
+        this->master = new QLocalSocket();
+
+        QObject::connect(master, &QLocalSocket::readyRead, [=] {
+            if (!master->canReadLine()) return;
+
+            while (master->canReadLine()) {
+                QString line = master->readLine().trimmed();
+                if (line == "RESET") {
+                    //Reset PAM state
+                    ui->goBackUserSelect->click();
+                    showCover();
+                }
+            }
+        });
+        master->connectToServer(parser->value("srv"));
+        master->waitForConnected();
+        master->write(QString("SEED " + parser->value("seed") + "\n").toUtf8());
+        master->flush();
+    }
 
     background = settings->value("background", "/usr/share/tsscreenlock/triangles.svg").toString();
     ui->pagesStack->setCurrentAnimation(tStackedWidget::SlideHorizontal);
@@ -180,6 +205,12 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::attemptLoginUser(QString username, QString displayName, QString homeDir, int uid) {
+    if (master) {
+        //Tell greeter to switch to another session if one is available
+        master->write(QString("SWITCH " + username + "\n").toUtf8());
+        master->flush();
+    }
+
     this->setEnabled(false);
     passwordScreenShown = false;
 
@@ -412,6 +443,13 @@ void MainWindow::attemptStartSessionUser() {
 
     if (!pamBackend->startSession(sessionExec)) {
         failLoginUser(tr("Session unable to be opened"));
+    }
+
+    if (master) {
+        //Tell the master that we're logging in a user
+        master->write(QString("LOGIN " + currentLoginUsername + "\n").toUtf8());
+        master->write(QString("SESSIONID " + pamBackend->getenv("XDG_SESSION_ID")).toUtf8() + "\n");
+        master->flush();
     }
 
     //Kill pulseaudio
