@@ -78,9 +78,11 @@ SeatManager::SeatManager(QString seat, bool testMode, QObject *parent) : QObject
     spawnGreeter();
 }
 
-void SeatManager::spawnGreeter() {
+void SeatManager::spawnGreeter(int vt) {
     qDebug() << "Spawning a greeter";
-    int vt = ManagedDisplay::nextAvailableVt();
+    if (vt == -1) {
+        vt = ManagedDisplay::nextAvailableVt();
+    }
 
     //Create a random seed
     QString choices = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

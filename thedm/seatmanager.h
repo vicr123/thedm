@@ -42,7 +42,7 @@ class SeatManager : public QObject
     signals:
 
     public slots:
-        void spawnGreeter();
+        void spawnGreeter(int vt = -1);
         Q_SCRIPTABLE void SwitchToGreeter();
         Q_SCRIPTABLE void SwitchToUser(QString username, QString session_name);
         Q_SCRIPTABLE void Lock();

@@ -487,11 +487,15 @@ void MainWindow::attemptStartSessionUser() {
         //Now wait for the session to close
         pamBackend->waitForSessionEnd();
 
+        if (this->master != nullptr) {
+            this->master->write("FINISHED\n");
+            this->master->flush();
+        }
+
         //The session has ended; close the PAM session and exit
         pamBackend->deleteLater();
 
         qDebug() << "PAM session closed; exiting now";
-        this->close();
         QApplication::exit(0);
     });
 

@@ -46,7 +46,7 @@ struct ManagedDisplayPrivate {
     QString sessionId;
     QString username;
 
-    ManagedDisplay::DisplayGoneReason reason = ManagedDisplay::SessionExit;
+    ManagedDisplay::DisplayGoneReason reason = ManagedDisplay::Unknown;
     int spawnRetryCount = 0;
     int vt;
     bool testMode;
@@ -201,24 +201,26 @@ void ManagedDisplay::doSpawnGreeter() {
     d->greeterProcess->start(args.join(" "));
     connect(d->greeterProcess, QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished), [=](int exitCode, QProcess::ExitStatus status) {
         qDebug() << "Greeter exited with exit code" << exitCode;
-        switch (exitCode) {
-            case 0:
-                d->reason = SessionExit;
-                break;
-            case 1:
-                d->reason = SwitchSession;
-                break;
-            default: {
-                qWarning() << "Cannot spawn greeter process.";
-                d->spawnRetryCount++;
-                if (d->spawnRetryCount < 5) {
-                    doSpawnGreeter();
-                } else {
-                    qWarning() << "Giving up on spawning the greeter. Maybe something is wrong with your configuration.";
-                    d->reason = GreeterNotSpawned;
-                    this->deleteLater();
+        if (d->reason == Unknown) {
+            switch (exitCode) {
+                case 0:
+                    d->reason = SessionExit;
+                    break;
+                case 1:
+                    d->reason = SwitchSession;
+                    break;
+                default: {
+                    qWarning() << "Cannot spawn greeter process.";
+                    d->spawnRetryCount++;
+                    if (d->spawnRetryCount < 5) {
+                        doSpawnGreeter();
+                    } else {
+                        qWarning() << "Giving up on spawning the greeter. Maybe something is wrong with your configuration.";
+                        d->reason = GreeterNotSpawned;
+                        this->deleteLater();
+                    }
+                    return;
                 }
-                return;
             }
         }
 
@@ -287,6 +289,9 @@ void ManagedDisplay::socketAvailable(QLocalSocket* socket) {
                     socket->write("RESET\n");
                     socket->flush();
                 }
+            } else if (line == "FINISHED") {
+                //Greeter finished successfully
+                d->reason = DisplayGoneReason::SessionExit;
             }
         }
     });
