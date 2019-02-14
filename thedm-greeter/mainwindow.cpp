@@ -33,6 +33,7 @@
 #include <QToolButton>
 #include <QMenu>
 #include <QDir>
+#include <QThread>
 #include <QSysInfo>
 #include <QMessageBox>
 #include "pamquestion.h"
@@ -76,6 +77,8 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
             while (master->canReadLine()) {
                 QString line = master->readLine().trimmed();
                 if (line == "RESET") {
+                    isResetting = true;
+
                     //Wait a bit for PAM to "stabilize"
                     QTimer::singleShot(100, [=] {
                         //Reset PAM state
@@ -227,6 +230,7 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
 
     this->setEnabled(false);
     passwordScreenShown = false;
+    isResetting = false;
 
     QSettings tsSettings(homeDir + "/.config/theSuite/theShell.conf", QSettings::IniFormat);
 
@@ -240,6 +244,15 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
         userTranslator->load(userLocale.name(), QString(SHAREDIR) + "translations");
     }
     ui->retranslateUi(this);
+
+    //Wait a little to see if we need to reset
+    QThread::msleep(100);
+    QApplication::processEvents();
+
+    if (isResetting) {
+        //Don't do anything
+        return;
+    }
 
     //Choose the previously selected session for the user, otherwise leave it as the default
     internalSettings->beginGroup("sessions");

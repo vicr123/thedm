@@ -82,6 +82,7 @@ class MainWindow : public QMainWindow
 
         int moveY;
         bool coverHidden = false;
+        bool isResetting = false;
 
         QString background;
         QPixmap image;
