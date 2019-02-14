@@ -84,10 +84,10 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
                         } else {
                             switch (pamBackend->currentState()) {
                                 case PamBackend::Input:
-                                    pamBackend->currentInputCallback()("", false);
+                                    pamBackend->currentInputCallback()("", true);
                                     break;
                                 case PamBackend::AuthTok:
-                                    pamBackend->currentAuthCallback()("", "", "", false);
+                                    pamBackend->currentAuthCallback()("", "", "", true);
                                     break;
                                 default:
                                     //Do nothing
