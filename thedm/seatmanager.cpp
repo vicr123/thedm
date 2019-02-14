@@ -121,7 +121,7 @@ void SeatManager::SwitchToGreeter() {
         }
     }
 
-    qDebug() << "Spawning an existing greeter";
+    qDebug() << "Spawning a new greeter";
     spawnGreeter();
 }
 

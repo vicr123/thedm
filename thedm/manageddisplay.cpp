@@ -26,6 +26,7 @@
 #include <QThread>
 #include <QFile>
 #include <QDBusInterface>
+#include <QTimer>
 #include <the-libs_global.h>
 
 #include "sddm/virtualterminal.h"
@@ -231,6 +232,11 @@ void ManagedDisplay::doSpawnGreeter() {
         }
 
         this->deleteLater();
+    });
+
+    QTimer::singleShot(1000, [=] {
+        //Activate display after 1 second
+        this->activate();
     });
 }
 
