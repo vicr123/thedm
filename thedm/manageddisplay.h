@@ -23,6 +23,7 @@
 #include <QObject>
 #include <QDBusObjectPath>
 #include <QDBusArgument>
+#include <QLocalSocket>
 
 struct SessionList {
     QString sessionId;
@@ -48,11 +49,12 @@ inline const QDBusArgument &operator>>(const QDBusArgument &arg, SessionList &ma
 }
 
 struct ManagedDisplayPrivate;
+class SeatManager;
 class ManagedDisplay : public QObject
 {
         Q_OBJECT
     public:
-        explicit ManagedDisplay(QString seat, int vt, QObject *parent = nullptr);
+        explicit ManagedDisplay(QString seat, int vt, bool testMode, QString seed, QString srvName, SeatManager *parent);
         ~ManagedDisplay();
 
         enum DisplayGoneReason {
@@ -63,11 +65,17 @@ class ManagedDisplay : public QObject
         };
 
         static int nextAvailableVt();
+        bool needsSocket();
+        bool loggedIn();
+        int vt();
+        QString username();
 
     signals:
         void displayGone(DisplayGoneReason reason);
 
     public slots:
+        void socketAvailable(QLocalSocket* socket);
+        void activate();
 
     private:
         ManagedDisplayPrivate* d;

@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui dbus thelib svg x11extras
+QT       += core gui dbus thelib svg x11extras network
 LIBS     += -lpam -lpam_misc -lthe-libs
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets

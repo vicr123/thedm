@@ -21,6 +21,9 @@
 #include <QApplication>
 #include <QCommandLineParser>
 
+bool testMode = false;
+QCommandLineParser* parser;
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -31,16 +34,27 @@ int main(int argc, char *argv[])
     a.setOrganizationDomain("");
     a.setApplicationName("theDM");
 
-    QCommandLineParser parser;
-    parser.addPositionalArgument("vt", "The VT to display on");
+    parser = new QCommandLineParser();
+    parser->addHelpOption();
+    parser->addOption({"test-mode", "Run theDM in testing mode"});
+    parser->addOption({"seed", "Seed of the master theDM process", "seed"});
+    parser->addOption({"vt", "VT that we're running on", "vt"});
+    parser->addOption({"srv", "Name of local socket server to connect to", "srv"});
+    parser->addOption({"seat", "Name of seat this greeter is for", "seat"});
 
-    parser.process(a);
-    QString vtString = parser.positionalArguments().first();
+    parser->process(a);
+
+    if (parser->isSet("test-mode")) {
+        testMode = true;
+    }
+
+    QString vtString = parser->value("vt");
 
     bool vtIntOk;
     vtString.toInt(&vtIntOk);
-    if (!vtIntOk) {
+    if (!vtIntOk || vtString.isEmpty()) {
         //TODO: Yell error
+        qWarning() << "VT is required";
         return 1;
     }
 
@@ -56,6 +70,7 @@ int main(int argc, char *argv[])
     backend.startSession("");
 
     qDebug() << backend.getenv("XDG_RUNTIME_DIR");*/
+
 
     MainWindow w(vtString);
     w.showFullScreen();

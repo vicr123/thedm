@@ -50,8 +50,6 @@ class PamBackend : public QObject {
         PamBackend(QString username, QString sessionName = "thedm", QObject* parent = nullptr);
         ~PamBackend();
 
-        PamInputCallback currentInputCallback();
-
         enum PamAuthenticationResult {
             AuthSuccess,
             AuthFailure,
@@ -65,6 +63,17 @@ class PamBackend : public QObject {
             AccMgmtNeedRefresh
         };
 
+        enum CallbackState {
+            None,
+            Input,
+            AuthTok,
+            Message
+        };
+
+        PamInputCallback currentInputCallback();
+        PamAuthTokCallback currentAuthCallback();
+        CallbackState currentState();
+
     public slots:
         PamAuthenticationResult authenticate();
         PamAccountMgmtResult acctMgmt();
@@ -75,6 +84,7 @@ class PamBackend : public QObject {
         void putenv(QString env, QString value);
         void setItem(int type, const void* value);
         QString getenv(QString env);
+        void endSession();
 
     signals:
         void inputRequired(bool echo, QString msg, PamInputCallback callback);
@@ -86,6 +96,7 @@ class PamBackend : public QObject {
         pam_handle_t* pamHandle;
         struct passwd *pw;
         QString username;
+        QString dbusPid;
 
         int sessionPid;
 
@@ -100,6 +111,8 @@ class PamBackend : public QObject {
         PasswordChanges* newPasswords;
 
         PamInputCallback inputCallback;
+        PamAuthTokCallback authTokCallback;
+        CallbackState state;
 };
 
 #endif // PAM_H

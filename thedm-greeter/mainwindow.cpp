@@ -24,6 +24,7 @@
 #include <QDBusMessage>
 #include <QSvgRenderer>
 #include <QProcess>
+#include <QCommandLineParser>
 #include <QX11Info>
 #include <tpropertyanimation.h>
 #include <QDateTime>
@@ -32,6 +33,7 @@
 #include <QToolButton>
 #include <QMenu>
 #include <QDir>
+#include <QThread>
 #include <QSysInfo>
 #include <QMessageBox>
 #include "pamquestion.h"
@@ -53,6 +55,8 @@
 #undef KeyPress
 #undef KeyRelease
 
+extern QCommandLineParser* parser;
+
 MainWindow::MainWindow(QString vtnr, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -65,6 +69,44 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
 
     userTranslator = new QTranslator();
     QApplication::installTranslator(userTranslator);
+
+    //Attempt to connect to server if possible
+    if (parser->isSet("srv") && parser->isSet("seed")) {
+        this->master = new QLocalSocket();
+
+        QObject::connect(master, &QLocalSocket::readyRead, [=] {
+            if (!master->canReadLine()) return;
+
+            while (master->canReadLine()) {
+                QString line = master->readLine().trimmed();
+                if (line == "RESET") {
+                    isResetting = true;
+
+                    //Wait a bit for PAM to "stabilize"
+                    QTimer::singleShot(100, [=] {
+                        //Reset PAM state
+                        switch (pamBackend->currentState()) {
+                            case PamBackend::Input:
+                                pamBackend->currentInputCallback()("", true);
+                                break;
+                            case PamBackend::AuthTok:
+                                pamBackend->currentAuthCallback()("", "", "", true);
+                                break;
+                            default:
+                                //Do nothing
+                                break;
+                        }
+
+                        showCover();
+                    });
+                }
+            }
+        });
+        master->connectToServer(parser->value("srv"));
+        master->waitForConnected();
+        master->write(QString("SEED " + parser->value("seed") + "\n").toUtf8());
+        master->flush();
+    }
 
     background = settings->value("background", "/usr/share/tsscreenlock/triangles.svg").toString();
     ui->pagesStack->setCurrentAnimation(tStackedWidget::SlideHorizontal);
@@ -189,8 +231,15 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::attemptLoginUser(QString username, QString displayName, QString homeDir, int uid) {
+    if (master) {
+        //Tell greeter to switch to another session if one is available
+        master->write(QString("SWITCH " + username + "\n").toUtf8());
+        master->flush();
+    }
+
     this->setEnabled(false);
     passwordScreenShown = false;
+    isResetting = false;
 
     QSettings tsSettings(homeDir + "/.config/theSuite/theShell.conf", QSettings::IniFormat);
 
@@ -204,6 +253,15 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
         userTranslator->load(userLocale.name(), QString(SHAREDIR) + "translations");
     }
     ui->retranslateUi(this);
+
+    //Wait a little to see if we need to reset
+    QThread::msleep(100);
+    QApplication::processEvents();
+
+    if (isResetting) {
+        //Don't do anything
+        return;
+    }
 
     //Choose the previously selected session for the user, otherwise leave it as the default
     internalSettings->beginGroup("sessions");
@@ -219,7 +277,12 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
     pamBackend->putenv("DISPLAY", qgetenv("DISPLAY"));
     pamBackend->putenv("XDG_SESSION_CLASS", "user");
     pamBackend->putenv("XDG_SESSION_TYPE", "x11");
-    pamBackend->putenv("XDG_SEAT", "seat0");
+    if (parser->isSet("seat")) {
+        pamBackend->putenv("XDG_SEAT", parser->value("seat"));
+        pamBackend->putenv("XDG_SEAT_PATH", "/org/freedesktop/DisplayManager/" + parser->value("seat"));
+    } else {
+        pamBackend->putenv("XDG_SEAT", "seat0");
+    }
     pamBackend->putenv("XDG_VTNR", this->vtnr);
     pamBackend->setItem(PAM_XDISPLAY, qgetenv("DISPLAY"));
     pamBackend->setItem(PAM_TTY, qgetenv("DISPLAY"));
@@ -411,6 +474,7 @@ void MainWindow::attemptLoginUser(QString username, QString displayName, QString
 void MainWindow::attemptStartSessionUser() {
     if (!pamBackend->setCred()) {
         failLoginUser(tr("PAM Credential Management failed"));
+        return;
     }
 
     //Save the session
@@ -425,6 +489,14 @@ void MainWindow::attemptStartSessionUser() {
 
     if (!pamBackend->startSession(sessionExec)) {
         failLoginUser(tr("Session unable to be opened"));
+        return;
+    }
+
+    if (master) {
+        //Tell the master that we're logging in a user
+        master->write(QString("LOGIN " + currentLoginUsername + "\n").toUtf8());
+        master->write(QString("SESSIONID " + pamBackend->getenv("XDG_SESSION_ID")).toUtf8() + "\n");
+        master->flush();
     }
 
     QApplication::instance()->removeNativeEventFilter(nativeEventFilter);
@@ -454,8 +526,18 @@ void MainWindow::attemptStartSessionUser() {
         //Now wait for the session to close
         pamBackend->waitForSessionEnd();
 
+        //Tear down the session
+        pamBackend->endSession();
+
+        if (this->master != nullptr) {
+            this->master->write("FINISHED\n");
+            this->master->flush();
+        }
+
         //The session has ended; close the PAM session and exit
         pamBackend->deleteLater();
+
+        qDebug() << "PAM session closed; exiting now";
         QApplication::exit(0);
     });
 

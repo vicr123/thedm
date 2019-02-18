@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 
 extern QString currentVt;
+extern bool testMode;
 
 PamBackend::PamBackend(QString username, QString sessionName, QObject* parent) : QObject(parent) {
     struct pam_conv pamConversationParams = {
@@ -19,18 +20,7 @@ PamBackend::PamBackend(QString username, QString sessionName, QObject* parent) :
 
 PamBackend::~PamBackend() {
     if (sessionOpen) {
-        //Tear down the session
-        pam_close_session(this->pamHandle, 0);
-
-        //Kill the session if needed
-        QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
-        sessionInterface.call(QDBus::NoBlock, "Kill", "all", (int) SIGTERM);
-
-        //Give any remaining processes 10 seconds and then kill them
-        QTimer::singleShot(10000, [] {
-            QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
-            sessionInterface.call(QDBus::NoBlock, "Kill", "all", (int) SIGKILL);
-        });
+        endSession();
     }
     pam_end(this->pamHandle, PAM_SUCCESS);
 }
@@ -121,19 +111,24 @@ bool PamBackend::startSession(QString exec) {
     if (!exec.isEmpty()) {
         //Fork and start the session
 
+        //Start DBus
+        QProcess* dbusLaunch = new QProcess;
+        dbusLaunch->start("dbus-launch");
+        dbusLaunch->waitForFinished();
+        for (QString env : QString(dbusLaunch->readAll()).split("\n")) {
+            pam_putenv(pamHandle, env.toLocal8Bit().data());
+
+            if (env.startsWith("DBUS_SESSION_BUS_PID=")) {
+                this->dbusPid = env.mid(21);
+            }
+        }
+
         int pid = fork();
         if (pid == -1) {
             //Fork failed
             QApplication::exit();
             return false;
         } else if (pid == 0) {
-            //Start DBus
-            QProcess* dbusLaunch = new QProcess;
-            dbusLaunch->start("dbus-launch");
-            dbusLaunch->waitForFinished();
-            for (QString env : QString(dbusLaunch->readAll()).split("\n")) {
-                pam_putenv(pamHandle, env.toLocal8Bit().data());
-            }
 
             //Start Pulse
             QProcess::startDetached("pulseaudio");
@@ -166,8 +161,38 @@ void PamBackend::waitForSessionEnd() {
     waitpid(sessionPid, nullptr, 0);
 }
 
+void PamBackend::endSession() {
+    if (dbusPid != "") {
+        //Kill the DBus daemon
+        kill(dbusPid.left(dbusPid.indexOf(";")).toInt(), SIGTERM);
+    }
+
+    //Tear down the session
+    pam_close_session(this->pamHandle, 0);
+
+    if (!testMode) {
+        //Kill the session if needed
+        QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
+        sessionInterface.call(QDBus::NoBlock, "Kill", "all", (int) SIGTERM);
+
+        //Give any remaining processes 10 seconds and then kill them
+        QTimer::singleShot(10000, [] {
+            QDBusInterface sessionInterface("org.freedesktop.login1", "/org/freedesktop/login1/session/self", "org.freedesktop.login1.Session", QDBusConnection::systemBus());
+            sessionInterface.call(QDBus::NoBlock, "Kill", "all", (int) SIGKILL);
+        });
+    }
+}
+
 PamInputCallback PamBackend::currentInputCallback() {
     return this->inputCallback;
+}
+
+PamAuthTokCallback PamBackend::currentAuthCallback() {
+    return this->authTokCallback;
+}
+
+PamBackend::CallbackState PamBackend::currentState() {
+    return this->state;
 }
 
 int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr) {
@@ -203,6 +228,8 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
                             loop->quit();
                         }
                     };
+                    backend->authTokCallback = callback;
+                    backend->state = AuthTok;
 
                     emit backend->passwordChangeRequired(true, callback);
                 } else if (message.startsWith("New password:") && backend->changingTok) {
@@ -219,6 +246,8 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
                                 loop->quit();
                             }
                         };
+                        backend->authTokCallback = callback;
+                        backend->state = AuthTok;
 
                         emit backend->passwordChangeRequired(false, callback);
                     }
@@ -234,8 +263,8 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
                             loop->quit();
                         }
                     };
-
                     backend->inputCallback = callback;
+                    backend->state = Input;
 
                     emit backend->inputRequired(msg[i]->msg_style == PAM_PROMPT_ECHO_ON, message, callback);
                 }
@@ -249,6 +278,7 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
                     QTimer::singleShot(0, loop, &QEventLoop::quit);
                 } else {
                     emit backend->message(message);
+                    backend->state = Message;
 
                     //Make sure the message is shown for at least 3 seconds
                     QTimer::singleShot(3000, [=] {
@@ -260,9 +290,15 @@ int PamBackend::conversation(int num_msg, const struct pam_message **msg, struct
         }
 
         if (loop->exec() != 0) {
+            //Reset the state
+            backend->state = None;
+
             result = PAM_CONV_ERR;
             break;
         }
+
+        //Reset the state
+        backend->state = None;
 
         if (result != PAM_SUCCESS) {
             break;

@@ -21,19 +21,33 @@
 #define DISPLAYMANAGER_H
 
 #include <QObject>
+#include <QDBusObjectPath>
 
 struct SeatManagerPrivate;
 class SeatManager : public QObject
 {
         Q_OBJECT
+        Q_CLASSINFO("D-Bus Interface", "org.freedesktop.DisplayManager.Seat")
+
+        Q_PROPERTY(bool CanSwitch READ CanSwitch)
+        Q_PROPERTY(bool HasGuestAccount READ HasGuestAccount)
+        Q_PROPERTY(QList<QDBusObjectPath> Sessions READ Sessions);
     public:
-        explicit SeatManager(QString seat, QObject *parent = nullptr);
+        explicit SeatManager(QString seat, bool testMode, QObject *parent = nullptr);
         ~SeatManager();
 
+        bool CanSwitch();
+        bool HasGuestAccount();
+        QList<QDBusObjectPath> Sessions();
     signals:
 
     public slots:
-        void spawnGreeter();
+        void spawnGreeter(int vt = -1);
+        Q_SCRIPTABLE void SwitchToGreeter();
+        Q_SCRIPTABLE void SwitchToUser(QString username, QString session_name);
+        Q_SCRIPTABLE void Lock();
+        bool SwitchToUser(QString username);
+
 
     private:
         SeatManagerPrivate* d;

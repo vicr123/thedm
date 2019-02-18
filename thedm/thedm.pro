@@ -1,5 +1,5 @@
 QT -= gui
-QT += thelib
+QT += thelib network
 
 LIBS += -lthe-libs
 
@@ -20,15 +20,28 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
     manageddisplay.cpp \
-    seatmanager.cpp
+    seatmanager.cpp \
+    sddm/virtualterminal.cpp
 
 HEADERS += \
     manageddisplay.h \
-    seatmanager.h
+    seatmanager.h \
+    sddm/virtualterminal.h
 
 DISTFILES += \
     thedm.service \
-    pam/thedm
+    pam/thedm \
+    thedm_org.freedesktop.DisplayManager.conf
+
+dbuscpptoxml.output = dbus_${QMAKE_FILE_BASE}.xml
+dbuscpptoxml.commands = qdbuscpp2xml -a -o ${QMAKE_FILE_OUT} ${QMAKE_FILE_NAME}
+dbuscpptoxml.input = DBUS_ADAPTORS_CPP
+dbuscpptoxml.CONFIG = no_link target_predeps
+QMAKE_EXTRA_COMPILERS += dbuscpptoxml
+
+DBUS_ADAPTORS_CPP = seatmanager.h
+
+DBUS_ADAPTORS = dbus_seatmanager.xml
 
 unix {
     target.path = /usr/bin/
@@ -39,8 +52,11 @@ unix {
     systemd.files = thedm.service
     systemd.path = /usr/lib/systemd/system
 
+    dbus.files = thedm_org.freedesktop.DisplayManager.conf
+    dbus.path = /usr/share/dbus-1/system.d
+
     pam.files = pam/thedm
     pam.path = /etc/pam.d/
 
-    INSTALLS += target systemd pam #translations
+    INSTALLS += target systemd pam dbus #translations
 }
