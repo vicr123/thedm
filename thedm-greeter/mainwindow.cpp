@@ -88,7 +88,7 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
     ui->hostnameLabel->setText(QSysInfo::machineHostName());
     ui->hostnameLabel_2->setText(QSysInfo::machineHostName());
 
-    pulse.start("pulseaudio");
+    //pulse.start("pulseaudio");
 
     //Load users
     for (int i = settings->value("users/uidMin", 1000).toInt(); i < settings->value("users/uidMax", 10000).toInt(); i++) {
@@ -419,16 +419,16 @@ void MainWindow::attemptStartSessionUser() {
     internalSettings->endGroup();
     internalSettings->sync();
 
+    //Kill pulseaudio
+    //The DE will autostart it
+    //pulse.kill();
+
     if (!pamBackend->startSession(sessionExec)) {
         failLoginUser(tr("Session unable to be opened"));
     }
 
     QApplication::instance()->removeNativeEventFilter(nativeEventFilter);
     nativeEventFilter->deleteLater();
-
-    //Kill pulseaudio
-    //The DE will autostart it
-    pulse.kill();
 
     //At this point, the session is running.
     QApplication::setQuitOnLastWindowClosed(false);

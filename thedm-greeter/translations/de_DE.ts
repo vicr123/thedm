@@ -119,7 +119,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="423"/>
+        <location filename="../mainwindow.cpp" line="427"/>
         <source>Session unable to be opened</source>
         <translation type="unfinished"></translation>
     </message>

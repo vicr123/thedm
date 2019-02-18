@@ -119,7 +119,7 @@
         <translation>Quản lý chứng chỉ PAM thất bại</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="423"/>
+        <location filename="../mainwindow.cpp" line="427"/>
         <source>Session unable to be opened</source>
         <translation>Phiên không có thể mở</translation>
     </message>
