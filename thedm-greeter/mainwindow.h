@@ -34,6 +34,7 @@ namespace Ui {
 
 class tPopover;
 class QToolButton;
+class NativeEventFilter;
 
 class MainWindow : public QMainWindow
 {
@@ -93,6 +94,7 @@ class MainWindow : public QMainWindow
 
         bool eventFilter(QObject *obj, QEvent *e);
         void resizeEvent(QResizeEvent* event);
+        void keyPressEvent(QKeyEvent* event);
 
         QList<QDBusInterface*> allDevices;
         QGraphicsOpacityEffect* passwordFrameOpacity;
@@ -110,6 +112,8 @@ class MainWindow : public QMainWindow
         QSettings* settings;
         QSettings* internalSettings;
 
+        NativeEventFilter* nativeEventFilter;
+
         PamBackend* pamBackend;
         tPopover* currentInfoMessage = nullptr;
 
@@ -120,6 +124,7 @@ class MainWindow : public QMainWindow
         void failLoginUser(QString reason);
 
         bool passwordScreenShown = false;
+        bool powerOptionsShown = false;
 };
 
 #endif // MAINWINDOW_H

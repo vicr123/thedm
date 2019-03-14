@@ -47,8 +47,11 @@
 #include <grp.h>
 #include <pwd.h>
 
+#include "nativeeventfilter.h"
+
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
+#include <X11/XF86keysym.h>
 #undef KeyPress
 #undef KeyRelease
 
@@ -214,6 +217,12 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
             this->setGeometry(QApplication::screens().first()->geometry());
         }
     });
+
+    nativeEventFilter = new NativeEventFilter();
+    connect(nativeEventFilter, &NativeEventFilter::PowerPressed, [=] {
+        ui->powerButton->click();
+    });
+    QApplication::instance()->installNativeEventFilter(nativeEventFilter);
 }
 
 MainWindow::~MainWindow()
@@ -474,6 +483,10 @@ void MainWindow::attemptStartSessionUser() {
     internalSettings->endGroup();
     internalSettings->sync();
 
+    //Kill pulseaudio
+    //The DE will autostart it
+    //pulse.kill();
+
     if (!pamBackend->startSession(sessionExec)) {
         failLoginUser(tr("Session unable to be opened"));
         return;
@@ -486,9 +499,8 @@ void MainWindow::attemptStartSessionUser() {
         master->flush();
     }
 
-    //Kill pulseaudio
-    //The DE will autostart it
-    pulse.kill();
+    QApplication::instance()->removeNativeEventFilter(nativeEventFilter);
+    nativeEventFilter->deleteLater();
 
     //At this point, the session is running.
     QApplication::setQuitOnLastWindowClosed(false);
@@ -1032,23 +1044,27 @@ void MainWindow::on_loginStack_currentChanged(int arg1)
 
 void MainWindow::on_powerButton_clicked()
 {
-    PowerOptions* power = new PowerOptions();
+    if (!powerOptionsShown) {
+        powerOptionsShown = true;
+        PowerOptions* power = new PowerOptions();
 
-    tPopover* p = new tPopover(power);
-    p->setPopoverWidth(400 * theLibsGlobal::getDPIScaling());
+        tPopover* p = new tPopover(power);
+        p->setPopoverWidth(400 * theLibsGlobal::getDPIScaling());
 
-    connect(power, &PowerOptions::dismiss, [=] {
-        p->dismiss();
-    });
-    connect(power, &PowerOptions::showCover, [=] {
-        showCover();
-    });
-    connect(p, &tPopover::dismissed, [=] {
-        p->deleteLater();
-        power->deleteLater();
-    });
+        connect(power, &PowerOptions::dismiss, [=] {
+            p->dismiss();
+        });
+        connect(power, &PowerOptions::showCover, [=] {
+            showCover();
+        });
+        connect(p, &tPopover::dismissed, [=] {
+            p->deleteLater();
+            power->deleteLater();
+            powerOptionsShown = false;
+        });
 
-    p->show(this);
+        p->show(this);
+    }
 }
 
 void MainWindow::on_goBackUserSelect_clicked()
@@ -1124,4 +1140,8 @@ void MainWindow::on_unlockButton_2_clicked()
 void MainWindow::on_sessionSelect_2_triggered(QAction *arg1)
 {
     on_sessionSelect_triggered(arg1);
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event) {
+    qDebug() << event->key();
 }

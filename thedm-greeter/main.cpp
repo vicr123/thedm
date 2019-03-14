@@ -28,6 +28,8 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+
+
     a.setOrganizationName("theSuite");
     a.setOrganizationDomain("");
     a.setApplicationName("theDM");

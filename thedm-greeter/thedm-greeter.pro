@@ -37,7 +37,8 @@ SOURCES += \
     underlineanimation.cpp \
     pamquestion.cpp \
     poweroptions.cpp \
-    pamchauthtok.cpp
+    pamchauthtok.cpp \
+    nativeeventfilter.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -45,7 +46,8 @@ HEADERS += \
     underlineanimation.h \
     pamquestion.h \
     poweroptions.h \
-    pamchauthtok.h
+    pamchauthtok.h \
+    nativeeventfilter.h
 
 FORMS += \
         mainwindow.ui \
