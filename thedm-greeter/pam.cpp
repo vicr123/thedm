@@ -88,9 +88,42 @@ bool PamBackend::startSession(QString exec) {
 
     sessionOpen = true;
 
-    //Change the UID and GID of this process
+    //Change the GID of this process
     pid_t sid = setsid();
     setgid(pw->pw_gid);
+
+    //Set the groups for this process
+    //Get PAM groups
+    QScopedPointer<gid_t, QScopedPointerArrayDeleter<gid_t>> pgroups;
+    int numPgroups = getgroups(0, nullptr);
+    if (numPgroups > 0) {
+        pgroups.reset(new gid_t[numPgroups]);
+        getgroups(numPgroups, pgroups.data());
+    }
+
+
+    //Get the user groups
+    QScopedPointer<gid_t, QScopedPointerArrayDeleter<gid_t>> ugroups;
+    int numUgroups = 0;
+    if (getgrouplist(pw->pw_name, pw->pw_gid, nullptr, &numUgroups) == -1) {
+        ugroups.reset(new gid_t[numUgroups]);
+        if (getgrouplist(pw->pw_name, pw->pw_uid, ugroups.data(), &numUgroups) == -1) {
+            qDebug() << "getgrouplist behaving weirdly";
+            return false;
+        }
+    }
+
+    //Concatenate the PAM groups and the user groups
+    int numGroups = numPgroups + numUgroups;
+    if (numGroups > 0) {
+        QScopedPointer<gid_t, QScopedPointerArrayDeleter<gid_t>> groups(new gid_t[numGroups]);
+        memcpy(groups.data(), pgroups.data(), numPgroups * sizeof(gid_t));
+        memcpy(groups.data() + numPgroups, ugroups.data(), numUgroups * sizeof(gid_t));
+
+        setgroups(numGroups, groups.data());
+    }
+
+    //Now change the UID of this process
     setuid(pw->pw_uid);
     chdir(pw->pw_dir);
 
