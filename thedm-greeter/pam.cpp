@@ -103,14 +103,16 @@ bool PamBackend::startSession(QString exec) {
 
 
     //Get the user groups
-    QScopedPointer<gid_t, QScopedPointerArrayDeleter<gid_t>> ugroups;
+    QScopedPointer<gid_t, QScopedPointerArrayDeleter<gid_t>> ugroups(new gid_t[0]);
     int numUgroups = 0;
-    if (getgrouplist(pw->pw_name, pw->pw_gid, nullptr, &numUgroups) == -1) {
+    while (getgrouplist(pw->pw_name, pw->pw_gid, ugroups.data(), &numUgroups) != -1) {
+        qDebug() << numUgroups << "groups";
         ugroups.reset(new gid_t[numUgroups]);
-        if (getgrouplist(pw->pw_name, pw->pw_uid, ugroups.data(), &numUgroups) == -1) {
+        /*if (getgrouplist(pw->pw_name, pw->pw_uid, ugroups.data(), &numUgroups) == -1) {
             qDebug() << "getgrouplist behaving weirdly";
+            qDebug() << numUgroups << "groups";
             return false;
-        }
+        }*/
     }
 
     //Concatenate the PAM groups and the user groups

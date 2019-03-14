@@ -72,139 +72,139 @@
         <translation>Bắt đầu phiên mỗi, hoặc tiếp tục phiên được tạm dừng</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="289"/>
-        <location filename="../mainwindow.cpp" line="455"/>
+        <location filename="../mainwindow.cpp" line="298"/>
+        <location filename="../mainwindow.cpp" line="464"/>
         <source>Hi %1!</source>
         <translation>Chào %1!</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="316"/>
+        <location filename="../mainwindow.cpp" line="325"/>
         <source>PAM Challenge</source>
         <translation>Câu hỏi PAM</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="317"/>
+        <location filename="../mainwindow.cpp" line="326"/>
         <source>Response</source>
         <translation>Câu trả lời</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="351"/>
+        <location filename="../mainwindow.cpp" line="360"/>
         <source>PAM Message</source>
         <translation>Tin nhắn PAM</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="415"/>
-        <location filename="../mainwindow.cpp" line="563"/>
+        <location filename="../mainwindow.cpp" line="424"/>
+        <location filename="../mainwindow.cpp" line="575"/>
         <source>Authentication failed.</source>
         <translation>Xác thực thất bại.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="437"/>
+        <location filename="../mainwindow.cpp" line="446"/>
         <source>PAM Account Management failed</source>
         <translation>Quản lý tài khoản PAM thất bại</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="440"/>
+        <location filename="../mainwindow.cpp" line="449"/>
         <source>Your account has expired. Contact your system administrator for more details.</source>
         <translation>Tài khoản của bạn đã hết hạn. Liên hệ với quản trị viên của bạn để hiểu thêm chi tiết.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="445"/>
+        <location filename="../mainwindow.cpp" line="454"/>
         <source>Unable to update your password</source>
         <translation>Không có thể cập nhật mật khẩu</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="467"/>
+        <location filename="../mainwindow.cpp" line="476"/>
         <source>PAM Credential Management failed</source>
         <translation>Quản lý chứng chỉ PAM thất bại</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="478"/>
+        <location filename="../mainwindow.cpp" line="491"/>
         <source>Session unable to be opened</source>
         <translation>Phiên không có thể mở</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="557"/>
+        <location filename="../mainwindow.cpp" line="569"/>
         <source>Couldn&apos;t log in</source>
         <translation>Không có thể đăng nhập</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="770"/>
-        <location filename="../mainwindow.cpp" line="850"/>
+        <location filename="../mainwindow.cpp" line="782"/>
+        <location filename="../mainwindow.cpp" line="862"/>
         <source>Charging</source>
         <translation>Đang sạc</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="798"/>
-        <location filename="../mainwindow.cpp" line="856"/>
+        <location filename="../mainwindow.cpp" line="810"/>
+        <location filename="../mainwindow.cpp" line="868"/>
         <source>Empty</source>
         <translation>Trống</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="802"/>
-        <location filename="../mainwindow.cpp" line="860"/>
+        <location filename="../mainwindow.cpp" line="814"/>
+        <location filename="../mainwindow.cpp" line="872"/>
         <source>Full</source>
         <translation>Đầy</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="807"/>
-        <location filename="../mainwindow.cpp" line="863"/>
+        <location filename="../mainwindow.cpp" line="819"/>
+        <location filename="../mainwindow.cpp" line="875"/>
         <source>Not Charging</source>
         <translation>Không sạc</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="812"/>
-        <location filename="../mainwindow.cpp" line="814"/>
+        <location filename="../mainwindow.cpp" line="824"/>
+        <location filename="../mainwindow.cpp" line="826"/>
         <source>%1% PC Battery%2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="819"/>
+        <location filename="../mainwindow.cpp" line="831"/>
         <source>No Battery Inserted</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="841"/>
+        <location filename="../mainwindow.cpp" line="853"/>
         <source>Pair %1 using theFile to see battery status.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="843"/>
+        <location filename="../mainwindow.cpp" line="855"/>
         <source>%1 battery unavailable. Device trusted?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="847"/>
+        <location filename="../mainwindow.cpp" line="859"/>
         <source>%1% battery on %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="853"/>
+        <location filename="../mainwindow.cpp" line="865"/>
         <source>Discharging</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1075"/>
+        <location filename="../mainwindow.cpp" line="1091"/>
         <source>What&apos;s the username of the user you&apos;d like to log in as?</source>
         <translation>Tên người dùng bạn muốn đăng nhập là gì?</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1076"/>
+        <location filename="../mainwindow.cpp" line="1092"/>
         <source>Log in as other user</source>
         <translation>Đăng nhập thành người khác</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1077"/>
+        <location filename="../mainwindow.cpp" line="1093"/>
         <source>Username</source>
         <translation>Tên người dùng</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1105"/>
+        <location filename="../mainwindow.cpp" line="1121"/>
         <source>User not found</source>
         <translation>Người dùng không tìm thấy</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1106"/>
+        <location filename="../mainwindow.cpp" line="1122"/>
         <source>Couldn&apos;t find that user. Make sure you&apos;ve spelled the username correctly.</source>
         <translation>Không có thể tìm thấy người dùng đó. Kiểm tra bạn đã viết đúng tên người dùng.</translation>
     </message>
