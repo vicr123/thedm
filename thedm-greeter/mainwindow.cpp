@@ -158,7 +158,7 @@ MainWindow::MainWindow(QString vtnr, QWidget *parent) :
             });
         }
     }
-    ui->userScroll->setFixedHeight(qMin((float) ui->userList->sizeHint().height(), this->height() / 4 * theLibsGlobal::getDPIScaling()));
+    ui->userScroll->setFixedHeight(qMin((double) ui->userList->sizeHint().height(), this->height() / 4 * theLibsGlobal::getDPIScaling()));
 
     //Check to see if there's only one known user
     if (knownUsers.count() == 1) {
